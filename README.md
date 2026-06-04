@@ -34,13 +34,14 @@ bun install
 
 ### 2. Start PostgreSQL
 
-A `docker-compose.yml` is included:
+A `docker-compose.yml` is included. To develop on your host, start only the database:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
 > Or point `DATABASE_URL` at any existing PostgreSQL instance.
+> Prefer running the whole app in Docker? See [Docker](#docker) below.
 
 ### 3. Configure environment
 
