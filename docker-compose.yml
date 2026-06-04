@@ -1,0 +1,58 @@
+# Development stack with hot reload.
+#
+#   docker compose up              # start Postgres + the Nuxt dev server
+#   docker compose up -d postgres  # start only Postgres (dev the app on the host)
+#
+# First run, inside the app container, create the schema and seed the admin:
+#   docker compose exec app bun run db:migrate
+#   docker compose exec app bun run seed:admin
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nuxt_starter_app
+    command: ["bun", "run", "dev", "--host"]
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
+      # Override in your shell or a .env; this default is for local dev only.
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:-dev-only-session-secret-change-me-min-32-chars}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
+      # Enable Vite watch polling so HMR works on bind-mounted source.
+      NUXT_DOCKER_DEV: "true"
+    ports:
+      - "3000:3000"
+      - "24678:24678" # Vite HMR websocket
+    volumes:
+      - .:/app # bind-mount source for hot reload
+      - app_node_modules:/app/node_modules # keep container deps + Prisma client
+      - app_nuxt:/app/.nuxt # keep the build cache container-side
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: nuxt_starter_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nuxt_starter
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  app_node_modules:
+  app_nuxt:

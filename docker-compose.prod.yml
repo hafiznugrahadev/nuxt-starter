@@ -1,0 +1,43 @@
+# Production stack — builds the optimized image and runs migrations on start.
+#
+#   NUXT_SESSION_PASSWORD=... docker compose -f docker-compose.prod.yml up -d --build
+#
+# The admin user can be seeded once with:
+#   docker compose -f docker-compose.prod.yml exec app bunx prisma db seed
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nuxt_starter_app_prod
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?set a session secret of at least 32 chars}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: nuxt_starter_db_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nuxt_starter
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

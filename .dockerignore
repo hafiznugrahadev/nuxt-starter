@@ -1,0 +1,27 @@
+node_modules
+.nuxt
+.nitro
+.output
+.cache
+.data
+dist
+
+.git
+.github
+.gitignore
+
+# Local env — provide secrets via compose / runtime instead
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+.idea
+.fleet
+.vscode
+
+Dockerfile
+Dockerfile.dev
+docker-compose*.yml
+README.md
