@@ -1,14 +1,33 @@
-# Production stack — builds the optimized image and runs migrations on start.
+# Production stack.
 #
-#   NUXT_SESSION_PASSWORD=... docker compose -f docker-compose.prod.yml up -d --build
+#   NUXT_SESSION_PASSWORD=$(openssl rand -base64 32) \
+#     docker compose -f docker-compose.prod.yml up -d --build
 #
-# The admin user can be seeded once with:
-#   docker compose -f docker-compose.prod.yml exec app bunx prisma db seed
+# The `migrate` job applies migrations before the app starts. Seed the admin
+# once it is up:
+#   docker compose -f docker-compose.prod.yml run --rm migrate \
+#     bun node_modules/prisma/build/index.js db seed
 services:
+  # One-off job: applies pending migrations, then exits. Built from the full
+  # build stage so it has the Prisma CLI and its dependencies.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    command: ["bun", "node_modules/prisma/build/index.js", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     container_name: nuxt_starter_app_prod
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
@@ -21,6 +40,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   postgres:

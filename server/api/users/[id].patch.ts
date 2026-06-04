@@ -1,5 +1,36 @@
 import { Prisma } from '@prisma/client'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Users'],
+    summary: 'Update a user',
+    description: 'Update an existing user. Omit `password` to keep the current one. Requires an admin session.',
+    parameters: [
+      { in: 'path', name: 'id', required: true, schema: { type: 'string' } }
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string', description: 'At least 8 characters; omit to keep current' },
+              role: { type: 'string', enum: ['ADMIN', 'USER'] }
+            }
+          }
+        }
+      }
+    },
+    responses: {
+      200: { description: 'Updated' },
+      404: { description: 'User not found' },
+      409: { description: 'Email already exists' }
+    }
+  }
+})
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 

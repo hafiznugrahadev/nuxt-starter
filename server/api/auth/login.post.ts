@@ -1,3 +1,30 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Log in',
+    description: 'Authenticate with email/password and start a sealed cookie session.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    responses: {
+      200: { description: 'Logged in' },
+      401: { description: 'Invalid email or password' }
+    }
+  }
+})
+
 export default defineEventHandler(async (event) => {
   const { email, password } = await readValidatedBody(event, loginSchema.parse)
 

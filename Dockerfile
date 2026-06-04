@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage ----------------------------------------------------------
+# Full dependency tree — also reused as the "migrator" image (it has the
+# Prisma CLI and its transitive deps) to run `migrate deploy` / `db seed`.
 FROM oven/bun:1.3 AS build
 
 WORKDIR /app
@@ -15,29 +17,24 @@ RUN bunx prisma generate
 RUN bun run build
 
 # ---- Runtime stage --------------------------------------------------------
+# Lean image: the Nitro `.output` is self-contained (it bundles the Prisma
+# client + query engine). Migrations are applied by the `migrate` service in
+# docker-compose.prod.yml, which runs from the build stage above.
 FROM oven/bun:1.3-slim AS runner
 
 ENV NODE_ENV=production \
     NUXT_HOST=0.0.0.0 \
     NUXT_PORT=3000
 
+# Prisma's query engine needs OpenSSL at runtime.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Self-contained Nitro server (includes the traced Prisma client + engine).
 COPY --from=build /app/.output ./.output
-
-# Prisma schema, migrations and CLI so the entrypoint can run `migrate deploy`.
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/node_modules/prisma ./node_modules/prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
 
 EXPOSE 3000
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["bun", "/app/.output/server/index.mjs"]

@@ -2,6 +2,26 @@ import type { Prisma } from '@prisma/client'
 
 // Server-side datatable endpoint: pagination, sorting and search are all
 // computed on the server and returned as `{ rows, total }`.
+defineRouteMeta({
+  openAPI: {
+    tags: ['Users'],
+    summary: 'List users (server-side datatable)',
+    description: 'Paginated, sortable and searchable list. Requires an admin session.',
+    parameters: [
+      { in: 'query', name: 'page', schema: { type: 'integer', default: 1 } },
+      { in: 'query', name: 'pageSize', schema: { type: 'integer', default: 10, maximum: 100 } },
+      { in: 'query', name: 'sort', schema: { type: 'string', enum: ['name', 'email', 'role', 'createdAt'], default: 'createdAt' } },
+      { in: 'query', name: 'order', schema: { type: 'string', enum: ['asc', 'desc'], default: 'desc' } },
+      { in: 'query', name: 'search', schema: { type: 'string' } }
+    ],
+    responses: {
+      200: { description: 'A page of users with the total count' },
+      401: { description: 'Not authenticated' },
+      403: { description: 'Not an administrator' }
+    }
+  }
+})
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 

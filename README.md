@@ -20,6 +20,8 @@ A production-ready Nuxt 4 starter with cookie-session auth, a protected admin ar
 - 🛡️ **Protected admin area** (`/admin/users`) — route middleware + admin-only API guard.
 - 📊 **Reusable `<ServerDataTable>`** — server-side pagination, sorting and search driven by the `useServerTable` composable. Drop it anywhere with a `url` + `columns`.
 - 👥 **Users CRUD API** with Zod validation (`/api/users`).
+- 📖 **Interactive API docs** at `/docs` ([Scalar](https://nuxt.com/modules/scalar)) backed by an auto-generated OpenAPI document.
+- 🐳 **Docker** dev stack with hot reload + a production image and compose file.
 - 🌱 **`bun run seed:admin`** — idempotent admin seeding from env vars (plus `seed:users` for demo data).
 
 ## Getting started

@@ -1,3 +1,32 @@
+defineRouteMeta({
+  openAPI: {
+    tags: ['Users'],
+    summary: 'Create a user',
+    description: 'Create a new user account. Requires an admin session.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'email', 'password'],
+            properties: {
+              name: { type: 'string' },
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string', description: 'At least 8 characters' },
+              role: { type: 'string', enum: ['ADMIN', 'USER'], default: 'USER' }
+            }
+          }
+        }
+      }
+    },
+    responses: {
+      201: { description: 'Created' },
+      409: { description: 'Email already exists' }
+    }
+  }
+})
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
