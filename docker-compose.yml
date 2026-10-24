@@ -1,11 +1,29 @@
-# Development stack with hot reload.
+# Development stack with hot reload, email worker and Mailpit (OrbStack-friendly).
 #
-#   docker compose up              # start Postgres + the Nuxt dev server
-#   docker compose up -d postgres  # start only Postgres (dev the app on the host)
+#   docker compose up --build      # Postgres + the Nuxt dev server
+#   docker compose up -d postgres redis redis-queue mailpit  # host development dependencies
+#
+# No ports are published to the host. Services are only `expose`d and are
+# reached through OrbStack's per-container domains:
+#   app:      https://app.nuxt-starter.orb.local           (TLS by OrbStack)
+#   postgres: postgres.nuxt-starter.orb.local:5432         (raw TCP)
+#   redis:    redis.nuxt-starter.orb.local:6379            (cache)
+#   redis-queue: redis-queue.nuxt-starter.orb.local:6379   (BullMQ jobs)
+#   mailpit:  http://mailpit.nuxt-starter.orb.local:8025   (mail inbox)
+#
+# Prisma Studio (Prisma 7) only binds 127.0.0.1, so it cannot be exposed as a
+# container service. Run it from the host against the compose database instead:
+#   DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter?schema=public bun run db:studio
 #
 # First run, inside the app container, create the schema and seed the admin:
 #   docker compose exec app bun run db:migrate
 #   docker compose exec app bun run seed:admin
+#
+# After changing dependencies (package.json / bun.lock), just restart the
+# stack: the entrypoint (docker-entrypoint.dev.sh) runs `bun install` +
+# `prisma generate` on every boot, so the container-side volumes converge
+# with bun.lock automatically:
+#   docker compose up -d --build
 services:
   app:
     build:
@@ -15,16 +33,26 @@ services:
     command: ["bun", "run", "dev", "--host"]
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
+      REDIS_URL: redis://redis:6379
+      QUEUE_REDIS_URL: redis://redis-queue:6379
       # Override in your shell or a .env; this default is for local dev only.
-      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:-dev-only-session-secret-change-me-min-32-chars}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-better-auth-secret-change-me-32ch}
+      # Must match the origin you browse from: Better Auth checks the Origin
+      # header against it (CSRF) and derives cookie attributes from it. With
+      # OrbStack's HTTPS domain uses the URL below by default. Override it with
+      # BETTER_AUTH_URL in .env if you use a different host.
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://app.nuxt-starter.orb.local}
+      NUXT_PUBLIC_ENABLE_REGISTRATION: ${NUXT_PUBLIC_ENABLE_REGISTRATION:-true}
+      # Basic auth for the API docs endpoints; unset keeps them public.
+      DOCS_BASIC_AUTH_USER: ${DOCS_BASIC_AUTH_USER:-}
+      DOCS_BASIC_AUTH_PASSWORD: ${DOCS_BASIC_AUTH_PASSWORD:-}
       ADMIN_NAME: ${ADMIN_NAME:-Administrator}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
       # Enable Vite watch polling so HMR works on bind-mounted source.
       NUXT_DOCKER_DEV: "true"
-    ports:
-      - "3000:3000"
-      - "24678:24678" # Vite HMR websocket
+    # No host port forwarding. OrbStack routes EXPOSE'd ports via the
+    # container's orb.local domain (https://app.nuxt-starter.orb.local).
     volumes:
       - .:/app # bind-mount source for hot reload
       - app_node_modules:/app/node_modules # keep container deps + Prisma client
@@ -32,18 +60,84 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
     restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nuxt_starter_worker
+    command: ["bun", "run", "worker"]
+    environment:
+      QUEUE_REDIS_URL: redis://redis-queue:6379
+      SKIP_PRISMA_GENERATE: "true"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_SECURE: "false"
+      SMTP_FROM: "${SMTP_FROM:-Nuxt Starter <no-reply@localhost>}"
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    volumes:
+      - .:/app
+      - worker_node_modules:/app/node_modules
+      - worker_nuxt:/app/.nuxt
+    depends_on:
+      redis-queue:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    container_name: nuxt_starter_redis
+    restart: unless-stopped
+    # Cache-only instance: cap memory and evict least-recently-used keys.
+    # Reachable from the host via OrbStack at redis.nuxt-starter.orb.local:6379.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # BullMQ needs a durable Redis instance with noeviction. Keep it separate
+  # from the cache instance, which intentionally evicts least-recently-used keys.
+  redis-queue:
+    image: redis:8-alpine
+    container_name: nuxt_starter_redis_queue
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_queue_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: nuxt_starter_mailpit
+    restart: unless-stopped
+    expose:
+      - "1025"
+      - "8025"
 
   postgres:
     image: postgres:17-alpine
     container_name: nuxt_starter_db
     restart: unless-stopped
+    # No ports are published. From the host, connect to
+    # postgres.nuxt-starter.orb.local:5432 instead of localhost.
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: nuxt_starter
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -55,4 +149,7 @@ services:
 volumes:
   postgres_data:
   app_node_modules:
+  worker_node_modules:
   app_nuxt:
+  worker_nuxt:
+  redis_queue_data:

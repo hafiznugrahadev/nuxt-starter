@@ -1,28 +1,29 @@
-import { PrismaClient } from '@prisma/client'
-import { hashUserPassword } from '../server/utils/password'
-
 // Seeds (or resets) the administrator account. Credentials are read from the
-// environment (see .env.example) and the command is idempotent — re-running it
-// updates the existing admin to the configured name/password.
+// environment (see .env.example). The user is created through Better Auth so
+// the password hash and related records match what the app expects, which
+// makes the command idempotent: re-running it recreates the admin with the
+// configured name/password.
 //
 //   bun run seed:admin
-const prisma = new PrismaClient()
+
+// Seeding only touches the database; silence Better Auth's base-URL warning.
+process.env.BETTER_AUTH_URL ||= 'http://localhost:3000'
+const { auth } = await import('../server/utils/auth')
+const { prisma } = await import('../server/utils/prisma')
 
 async function main() {
   const name = process.env.ADMIN_NAME || 'Administrator'
   const email = process.env.ADMIN_EMAIL || 'admin@example.com'
   const password = process.env.ADMIN_PASSWORD || 'admin12345'
 
-  const hashed = await hashUserPassword(password)
+  await prisma.user.deleteMany({ where: { email } })
 
-  const admin = await prisma.user.upsert({
-    where: { email },
-    update: { name, role: 'ADMIN', password: hashed },
-    create: { name, email, role: 'ADMIN', password: hashed }
+  await auth.api.createUser({
+    body: { name, email, password, role: 'admin' }
   })
 
   console.log('✓ Admin user is ready')
-  console.log(`  email:    ${admin.email}`)
+  console.log(`  email:    ${email}`)
   console.log(`  password: ${password}`)
 }
 

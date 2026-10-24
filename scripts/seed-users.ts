@@ -1,13 +1,14 @@
-import { PrismaClient } from '@prisma/client'
-import { hashUserPassword } from '../server/utils/password'
-
-// Generates demo (non-admin) users so the server-side datatable has enough
-// rows to showcase pagination, sorting and search.
+// Generates demo (non-admin) users so the admin datatable has enough rows to
+// showcase pagination, sorting and search. Users are created through Better
+// Auth; emails that already exist are skipped, so the script can be re-run.
 //
 //   bun run seed:users           # 50 users
 //   SEED_COUNT=200 bun run seed:users
-const prisma = new PrismaClient()
 
+// Seeding only touches the database; silence Better Auth's base-URL warning.
+process.env.BETTER_AUTH_URL ||= 'http://localhost:3000'
+const { auth } = await import('../server/utils/auth')
+const { prisma } = await import('../server/utils/prisma')
 const firstNames = [
   'Alice', 'Bob', 'Carol', 'David', 'Emma', 'Frank', 'Grace', 'Henry',
   'Ivy', 'Jack', 'Kara', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter',
@@ -21,21 +22,30 @@ const lastNames = [
 
 async function main() {
   const count = Number(process.env.SEED_COUNT || 50)
-  const password = await hashUserPassword('password123')
 
-  const data = Array.from({ length: count }, (_, i) => {
+  const existing = new Set(
+    (await prisma.user.findMany({ select: { email: true } })).map(user => user.email)
+  )
+
+  let created = 0
+  for (let i = 0; i < count; i++) {
     const first = firstNames[i % firstNames.length]
     const last = lastNames[Math.floor(i / firstNames.length) % lastNames.length]
-    return {
-      name: `${first} ${last}`,
-      email: `${first}.${last}.${i}@example.com`.toLowerCase(),
-      password,
-      role: 'USER' as const
-    }
-  })
+    const email = `${first}.${last}.${i}@example.com`.toLowerCase()
+    if (existing.has(email)) continue
 
-  const result = await prisma.user.createMany({ data, skipDuplicates: true })
-  console.log(`✓ Seeded ${result.count} demo users (password: password123)`)
+    await auth.api.createUser({
+      body: {
+        name: `${first} ${last}`,
+        email,
+        password: 'password123',
+        role: 'user'
+      }
+    })
+    created++
+  }
+
+  console.log(`✓ Seeded ${created} demo users (password: password123)`)
 }
 
 main()

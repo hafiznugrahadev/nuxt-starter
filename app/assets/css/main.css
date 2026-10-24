@@ -1,9 +1,29 @@
 @import "tailwindcss";
-@import "@nuxt/ui";
+@import "tw-animate-css";
+@import "shadcn-vue/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Palette and radii follow the TailwindAdmin template
+  (github.com/Tailwind-Admin/free-tailwind-admin-dashboard-template, MIT).
+  The template primary is darkened one step (L 0.6533 -> 0.58) so white text on
+  primary clears WCAG AA; the hue and character are unchanged.
+*/
 @theme static {
-  --font-sans: 'Public Sans', sans-serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Bricolage Grotesque', var(--font-sans);
 
+  --color-success: oklch(0.6963 0.1502 174.63);
+  --color-warning: oklch(0.7124 0.1619 81.39);
+  --color-error: oklch(0.5868 0.2078 25.33);
+  --color-info: oklch(0.5832 0.2172 294.04);
+
+  --color-dark: oklch(0.2643 0.0345 262.71);
+  --color-darkborder: oklch(0.3667 0.0414 262.29);
+  --color-darklink: oklch(0.7454 0.0488 258.74);
+
+  /* Nuxt brand green, kept for `green-*` utilities. */
   --color-green-50: #EFFDF5;
   --color-green-100: #D9FBE8;
   --color-green-200: #B3F5D1;
@@ -15,4 +35,148 @@
   --color-green-800: #016538;
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
+}
+
+@theme inline {
+  --font-heading: var(--font-heading);
+
+  --color-lightprimary: var(--lightprimary);
+  --color-lightsecondary: var(--lightsecondary);
+  --color-link: var(--link);
+  --color-darklink: var(--darklink);
+  --color-bodytext: var(--bodytext);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Template palette. */
+  --primary: oklch(0.58 0.19 266.79);
+  --secondary: oklch(0.7632 0.139 237.2);
+  --link: oklch(0.327 0.0355 260.11);
+  --bodytext: oklch(0.5216 0.0471 260.8);
+  --darklink: oklch(0.7454 0.0488 258.74);
+
+  --background: oklch(0.97 0.0029 264.54);
+  --foreground: var(--link);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--link);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--link);
+  --primary-foreground: oklch(1 0 0);
+  --secondary-foreground: var(--link);
+  --muted: oklch(0.9651 0.0097 252.81);
+  --muted-foreground: var(--bodytext);
+  --accent: var(--lightprimary);
+  --accent-foreground: var(--primary);
+  --destructive: var(--error);
+  --border: oklch(0.9203 0.015 260.73);
+  --input: oklch(0.9203 0.015 260.73);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: var(--secondary);
+  --chart-3: var(--success);
+  --chart-4: var(--warning);
+  --chart-5: var(--error);
+  --radius: 10px;
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: var(--link);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: var(--lightprimary);
+  --sidebar-accent-foreground: var(--primary);
+  --sidebar-border: oklch(0.9203 0.015 260.73);
+  --sidebar-ring: var(--primary);
+
+  --lightprimary: color-mix(in oklab, var(--primary) 12%, transparent);
+  --lightsecondary: color-mix(in oklab, var(--secondary) 12%, transparent);
+}
+
+.dark {
+  --primary: oklch(0.6533 0.1838 266.79);
+  --background: oklch(0.2643 0.0345 262.71);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.2987 0.0384 262.71);
+  --card-foreground: oklch(1 0 0);
+  --popover: var(--card);
+  --popover-foreground: oklch(1 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.7632 0.139 237.2);
+  --secondary-foreground: oklch(0.2643 0.0345 262.71);
+  --muted: oklch(0.3401 0.048 261.63);
+  --muted-foreground: oklch(0.7454 0.0488 258.74);
+  --accent: var(--lightprimary);
+  --accent-foreground: var(--primary);
+  --destructive: oklch(0.6368 0.2078 25.33);
+  --border: oklch(0.3667 0.0414 262.29);
+  --input: oklch(0.3667 0.0414 262.29);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: var(--secondary);
+  --chart-3: var(--success);
+  --chart-4: var(--warning);
+  --chart-5: var(--error);
+  --sidebar: oklch(0.2643 0.0345 262.71);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: var(--lightprimary);
+  --sidebar-accent-foreground: var(--primary);
+  --sidebar-border: oklch(0.3667 0.0414 262.29);
+  --sidebar-ring: var(--primary);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Collapsed icon-sidebar: clip the wordmark to an icon-sized box, matching
+   the template's sidebar.css behaviour for `.logo`. */
+[data-slot='sidebar-wrapper'] [data-state='collapsed'] .logo {
+  width: 40px;
+  overflow: hidden;
+  padding-left: 5px;
 }

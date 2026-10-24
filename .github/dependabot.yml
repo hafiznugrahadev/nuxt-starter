@@ -1,0 +1,48 @@
+version: 2
+
+updates:
+  # Dependencies JS/TS via bun.lock
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Jakarta"
+    commit-message:
+      prefix: "chore"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 10
+
+  # GitHub Actions (.github/workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Jakarta"
+    commit-message:
+      prefix: "chore"
+
+  # Base image di Dockerfile & Dockerfile.dev
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Jakarta"
+    commit-message:
+      prefix: "chore"
+
+  # Image service di docker-compose*.yml (postgres, dll.)
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Jakarta"
+    commit-message:
+      prefix: "chore"

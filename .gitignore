@@ -8,6 +8,7 @@ dist
 
 # Node dependencies
 node_modules
+/generated/prisma
 
 # Logs
 logs
@@ -17,8 +18,12 @@ logs
 .DS_Store
 .fleet
 .idea
+.playwright-mcp/
 
 # Local env files
 .env
 .env.*
 !.env.example
+
+# Headless E2E artifacts (screenshots on failure)
+.e2e-artifacts/

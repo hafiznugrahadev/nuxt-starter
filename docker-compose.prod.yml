@@ -1,28 +1,15 @@
-# Production stack.
+# Production stack (app + bundled PostgreSQL).
 #
-#   NUXT_SESSION_PASSWORD=$(openssl rand -base64 32) \
+#   BETTER_AUTH_SECRET=$(openssl rand -base64 32) \
+#   SMTP_HOST=smtp.example.com SMTP_PORT=587 SMTP_SECURE=true \
+#   SMTP_FROM='Nuxt Starter <no-reply@example.com>' \
 #     docker compose -f docker-compose.prod.yml up -d --build
 #
-# The `migrate` job applies migrations before the app starts. Seed the admin
-# once it is up:
-#   docker compose -f docker-compose.prod.yml run --rm migrate \
+# Migrations run automatically on app start via the image entrypoint
+# (`prisma migrate deploy`). Seed the admin once the app is running:
+#   docker compose -f docker-compose.prod.yml exec app \
 #     bun node_modules/prisma/build/index.js db seed
 services:
-  # One-off job: applies pending migrations, then exits. Built from the full
-  # build stage so it has the Prisma CLI and its dependencies.
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: build
-    command: ["bun", "node_modules/prisma/build/index.js", "migrate", "deploy"]
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: "no"
-
   app:
     build:
       context: .
@@ -31,7 +18,16 @@ services:
     container_name: nuxt_starter_app_prod
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
-      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:?set a session secret of at least 32 chars}
+      REDIS_URL: redis://redis:6379
+      QUEUE_REDIS_URL: redis://redis-queue:6379
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set a Better Auth secret of at least 32 chars}
+      # Set to the public origin (e.g. https://app.example.com) so Better Auth
+      # trusts it behind a reverse proxy.
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-}
+      NUXT_PUBLIC_ENABLE_REGISTRATION: ${NUXT_PUBLIC_ENABLE_REGISTRATION:-true}
+      # Basic auth for the API docs endpoints; unset keeps them public.
+      DOCS_BASIC_AUTH_USER: ${DOCS_BASIC_AUTH_USER:-}
+      DOCS_BASIC_AUTH_PASSWORD: ${DOCS_BASIC_AUTH_PASSWORD:-}
       ADMIN_NAME: ${ADMIN_NAME:-Administrator}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
@@ -40,9 +36,57 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
     restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: nuxt_starter_worker_prod
+    entrypoint: ["bun", "run", "worker"]
+    environment:
+      QUEUE_REDIS_URL: redis://redis-queue:6379
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST for password reset email}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:?set SMTP_FROM for password reset email}
+    depends_on:
+      redis-queue:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    container_name: nuxt_starter_redis_prod
+    restart: unless-stopped
+    # Cache-only instance: cap memory and evict least-recently-used keys.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # BullMQ jobs must not share the cache instance's LRU eviction policy.
+  redis-queue:
+    image: redis:8-alpine
+    container_name: nuxt_starter_redis_queue_prod
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_queue_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:17-alpine
@@ -62,3 +106,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_queue_data:

@@ -7,16 +7,27 @@ FROM oven/bun:1.3
 WORKDIR /app
 
 # Install dependencies first for better layer caching.
+# bun has no built-in download retry: one truncated tarball kills the build,
+# so retry — the second attempt reuses bun's cache and only re-fetches the failure.
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile \
+  || (sleep 5 && bun install --frozen-lockfile) \
+  || (sleep 10 && bun install --frozen-lockfile)
 
 # Generate the Prisma client (needs the schema only).
 COPY prisma ./prisma
-RUN bunx prisma generate
+RUN DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nuxt_starter bunx prisma generate
 
 # Copy the rest (overlaid by the bind mount during `docker compose up`).
 COPY . .
 
-EXPOSE 3000 24678
+# Sync deps + Prisma client into the node_modules volume on every boot, so a
+# dependency change only needs `docker compose up -d` (no volume rm).
+# Run via `sh` — the bind mount carries the host file's permission bits, which
+# may not include +x (fresh clones, some filesystems).
+COPY docker-entrypoint.dev.sh ./
+ENTRYPOINT ["sh", "./docker-entrypoint.dev.sh"]
+
+EXPOSE 3000 24678 5555
 
 CMD ["bun", "run", "dev", "--host"]
