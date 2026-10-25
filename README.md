@@ -41,7 +41,7 @@ downloads the latest template from GitHub, generates `.env` with fresh
 secrets, and prints the setup steps:
 
 ```bash
-npm create @hafiznugrahadev/nuxt-starter@latest my-app
+npm create @hafiznugraha.dev/nuxt-starter@latest my-app
 ```
 
 The installer lives in [`create-nuxt-starter/`](./create-nuxt-starter) in
