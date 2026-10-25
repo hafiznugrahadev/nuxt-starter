@@ -16,7 +16,7 @@
     "db:studio": "prisma studio",
     "seed:admin": "bun run scripts/seed-admin.ts",
     "seed:users": "bun run scripts/seed-users.ts",
-    "worker": "bun run workers/email.ts"
+    "worker": "bun run workers/index.ts"
   },
   "dependencies": {
     "@lucide/vue": "^1.61.0",

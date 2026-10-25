@@ -74,6 +74,8 @@ services:
     command: ["bun", "run", "worker"]
     environment:
       QUEUE_REDIS_URL: redis://redis-queue:6379
+      # Scheduled maintenance tasks write to the database directly.
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
       SKIP_PRISMA_GENERATE: "true"
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"

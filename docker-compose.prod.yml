@@ -51,6 +51,8 @@ services:
     entrypoint: ["bun", "run", "worker"]
     environment:
       QUEUE_REDIS_URL: redis://redis-queue:6379
+      # Scheduled maintenance tasks write to the database directly.
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
       SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST for password reset email}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-true}

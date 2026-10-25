@@ -58,7 +58,9 @@ async function login(p) {
   await p.locator('#email').fill(ADMIN_EMAIL)
   await p.locator('#password').fill(ADMIN_PASSWORD)
   await p.getByRole('button', { name: 'Sign in' }).click()
-  await p.waitForURL(/\/admin|\/$/, { timeout: 15000 })
+  // 30s: right after a container restart the first sign-in compiles the dev
+  // bundle and can easily exceed 15s once.
+  await p.waitForURL(/\/admin|\/$/, { timeout: 30000 })
 }
 
 // Deterministic sign-in: always navigate freshly (a post-logout fill races
@@ -68,7 +70,7 @@ async function signIn(p, email, password) {
   await p.locator('#email').fill(email)
   await p.locator('#password').fill(password)
   await p.getByRole('button', { name: 'Sign in' }).click()
-  await p.waitForURL(url => !url.href.includes('/login'), { timeout: 15000 })
+  await p.waitForURL(url => !url.href.includes('/login'), { timeout: 30000 })
   await p.waitForLoadState('load')
 }
 
@@ -203,8 +205,42 @@ await step('cleanup: delete the sign-up test user', async () => {
   }
 })
 
+console.log(`\n== scheduled tasks ==`)
+await step('settings page lists the scheduled maintenance tasks', async () => {
+  await openHydrated(page, `${BASE}/admin/settings`, '#setting-registration')
+  await page.getByText('Scheduled tasks').waitFor({ timeout: 30000 })
+  await page.getByText('Prune expired sessions').waitFor({ timeout: 30000 })
+})
+
+await step('run now executes the task and records the result', async () => {
+  const row = page.locator('li', { hasText: 'Prune expired sessions' })
+  await row.getByRole('button', { name: /Run now/ }).click()
+  // queue hand-off + worker processing + the page's own delayed refresh
+  await page.waitForTimeout(8000)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.getByText('Prune expired sessions').waitFor({ timeout: 30000 })
+  const text = await page.locator('li', { hasText: 'Prune expired sessions' }).innerText()
+  if (!text.includes('success') || !text.includes('session')) {
+    throw new Error(`last run: ${text.slice(0, 200)}`)
+  }
+})
+
+await step('next run is scheduled from the cron pattern', async () => {
+  const text = await page.locator('li', { hasText: 'Prune expired sessions' }).innerText()
+  if (!text.includes('Next:')) throw new Error(`no next run shown: ${text.slice(0, 160)}`)
+})
+
 console.log(`\n== profile page ==`)
 await step('account menu links to profile', async () => {
+  // The previous step reloaded the page; gate on hydration before clicking
+  // or the menu button falls back to a dead native click.
+  await page
+    .locator('button[aria-label="Account menu"]')
+    .waitFor({ timeout: 30000 })
+  await page.waitForFunction(
+    () => Boolean(document.querySelector('button[aria-label="Account menu"]')?.__vueParentComponent),
+    { timeout: 30000, polling: 200 }
+  )
   await page.getByRole('button', { name: 'Account menu' }).click()
   await page.getByRole('menuitem', { name: 'Profile' }).click()
   await page.waitForURL(/\/admin\/profile/)

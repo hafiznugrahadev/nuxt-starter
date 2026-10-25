@@ -22,15 +22,30 @@ The admin area's visual design (sidebar shell, palette, page-header cards) is ad
 ## Features
 
 - 🔐 **Email/password auth** via Better Auth. Sessions last 7 days, passwords are hashed by Better Auth (`scrypt`).
-- 🛡️ **Admin plugin**. The `/admin` area uses a TailwindAdmin-style shell (collapsible sidebar, sticky header). `/admin` is a dashboard with live database statistics (user counts, active sessions, signups per month, recent accounts); `/admin/users` manages accounts through `authClient.admin.*` (create, edit, set password, change role, **ban/unban** with reason + expiry, delete). Better Auth and the `admin` route middleware enforce access.
-- ✍️ **Self-service registration** (`/register`), toggleable with `NUXT_PUBLIC_ENABLE_REGISTRATION`. The flag gates the UI and rejects sign-ups at the API level (`emailAndPassword.disableSignUp`).
+- 🛡️ **Admin plugin**. The `/admin` area uses a TailwindAdmin-style shell (collapsible sidebar, sticky header). `/admin` is a dashboard with live database statistics (user counts, active sessions, signups per month, recent accounts); `/admin/users` manages accounts through `authClient.admin.*` (create, edit, set password, assign **multiple comma-separated roles**, **ban/unban** with reason + expiry, delete) with a role-filter modal and a card layout on phone screens. Better Auth and the `admin` route middleware enforce access.
+- ✍️ **Self-service registration** (`/register`), toggleable at runtime from **Admin → Settings** (stored in the `setting` table, enforced server-side by a Better Auth `hooks.before` guard). `NUXT_PUBLIC_ENABLE_REGISTRATION` remains the default for fresh installs.
+- 👤 **Profile page** (`/admin/profile`) for renaming the account and changing its password (other sessions are revoked).
 - 🔑 **Password recovery by email**. Better Auth creates one-hour reset links, BullMQ queues delivery, and the worker sends through SMTP. Development uses Mailpit.
 - 🧰 **Separate Redis roles**. Nitro cache uses LRU eviction; BullMQ uses a dedicated persistent Redis instance with `noeviction`.
+- ⏰ **Task scheduler**. The worker container registers BullMQ 6 job schedulers for recurring maintenance (pruning expired sessions and verification tokens) and records each run; **Admin → Settings** lists the schedules with the last result and a "Run now" button.
 - 📊 **Reusable `<ServerDataTable>`**. It is a *presentational* table with skeleton loading, debounced search, rows-per-page and pagination. You own the fetching state; see `useAdminUsers.ts` for the reference implementation.
 - 📖 **Interactive API docs** at `/docs` backed by Nitro OpenAPI; Better Auth publishes its endpoint-level reference at `/api/auth/reference`.
 - 🌗 **Dark mode** (`@nuxtjs/color-mode`) and self-hosted fonts (`@nuxt/fonts`).
 - 🐳 **Docker** dev stack with hot reload + a production image and compose files.
 - 🌱 **`bun run seed:admin`**. Admin seeding reads env vars and is idempotent (plus `seed:users` for demo data). Seeds create users through Better Auth (`auth.api.createUser`), so hashes match production behavior.
+
+## Quick start (npm installer)
+
+Scaffold a fresh copy of this starter with the published installer — it
+downloads the latest template from GitHub, generates `.env` with fresh
+secrets, and prints the setup steps:
+
+```bash
+npm create @hafiznugrahadev/nuxt-starter@latest my-app
+```
+
+The installer lives in [`create-nuxt-starter/`](./create-nuxt-starter) in
+this repository. Manual setup (clone + configure) is documented below.
 
 ## Getting started
 
