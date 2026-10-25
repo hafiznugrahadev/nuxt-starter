@@ -2,12 +2,18 @@
 // `#shared/utils/roles`). Better Auth stores multiple roles per user as one
 // comma-separated string in the `user.role` column ("user,admin"); its admin
 // plugin checks membership with `role.split(",")`, so multi-role needs no
-// schema change — just keep values in this registry and never make one role
-// name a substring of another ("admin" vs "superadmin" would break the
-// `contains`-style matching used for filtering).
-export const USER_ROLES = ['user', 'admin'] as const
+// schema change — just keep values in this registry. Role matching is always
+// anchored per comma-separated token, so one role name being a substring of
+// another ("admin" inside "super-admin") is safe; do NOT introduce raw
+// `contains` matching on the stored string.
+export const USER_ROLES = ['user', 'admin', 'super-admin'] as const
 
 export type UserRole = (typeof USER_ROLES)[number]
+
+// Superset of `admin`: holders also pass every admin check (registered in
+// the Better Auth plugin's adminRoles) and additionally gate the developer
+// tooling (task manager).
+export const SUPER_ADMIN_ROLE = 'super-admin'
 
 export const DEFAULT_ROLE: UserRole = 'user'
 

@@ -28,3 +28,18 @@ export async function requireAdmin(event: H3Event) {
 
   return session
 }
+
+// Require the super-admin role (a superset of admin that additionally gates
+// developer tooling such as the task manager).
+export async function requireSuperAdmin(event: H3Event) {
+  const session = await requireSession(event)
+
+  if (!hasRole(session.user.role, 'super-admin')) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Forbidden: super administrator access required'
+    })
+  }
+
+  return session
+}

@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<{
   /** Neutral hint rendered below the control when there is no error. */
   hint?: string
   /** password renders the PasswordInput (show/hide toggle); other values render Input. */
-  type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url'
+  type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'date'
   defaultValue?: string | number
   modelValue?: string | number
   class?: HTMLAttributes['class']

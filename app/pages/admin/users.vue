@@ -158,7 +158,9 @@ async function submitForm() {
       email: parsed.data.email,
       password: parsed.data.password,
       // The plugin joins the array into the stored comma-separated string.
-      role: parsed.data.roles
+      // The client type only knows better-auth's default role union, hence
+      // the cast for registry roles like 'super-admin'.
+      role: parsed.data.roles as ('user' | 'admin')[]
     })
     error = result.error
   }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { BookOpenIcon, HomeIcon, LayoutDashboardIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@lucide/vue'
+import { BookOpenIcon, HomeIcon, LayoutDashboardIcon, ListTodoIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@lucide/vue'
 import type { Component } from 'vue'
+import { hasRole } from '#shared/utils/roles'
 
 // Sidebar structure mirrors the TailwindAdmin template's VerticalSidebar:
 // labelled groups, active item highlighted with primary, hover with
 // lightprimary. Every entry points at a real page (no placeholder links).
+// The Developer group is role-aware: it only renders for super admins.
 interface NavItem {
   title: string
   icon: Component
@@ -12,28 +14,44 @@ interface NavItem {
   exact?: boolean
 }
 
-const groups: { header: string, items: NavItem[] }[] = [
-  {
-    header: 'Admin',
-    items: [
-      { title: 'Dashboard', icon: LayoutDashboardIcon, to: '/admin', exact: true },
-      { title: 'User Management', icon: UsersIcon, to: '/admin/users' },
-      { title: 'Settings', icon: SettingsIcon, to: '/admin/settings' }
-    ]
-  },
-  {
-    header: 'Account',
-    items: [
-      { title: 'Profile', icon: UserRoundIcon, to: '/admin/profile' }
-    ]
-  },
-  {
-    header: 'Site',
-    items: [
-      { title: 'Back to Site', icon: HomeIcon, to: '/' }
-    ]
-  }
-]
+const adminGroup = {
+  header: 'Admin',
+  items: [
+    { title: 'Dashboard', icon: LayoutDashboardIcon, to: '/admin', exact: true },
+    { title: 'User Management', icon: UsersIcon, to: '/admin/users' },
+    { title: 'Settings', icon: SettingsIcon, to: '/admin/settings' }
+  ] satisfies NavItem[]
+}
+
+const developerGroup = {
+  header: 'Developer',
+  items: [
+    { title: 'Task Manager', icon: ListTodoIcon, to: '/admin/dev-tasks' }
+  ] satisfies NavItem[]
+}
+
+const accountGroup = {
+  header: 'Account',
+  items: [
+    { title: 'Profile', icon: UserRoundIcon, to: '/admin/profile' }
+  ] satisfies NavItem[]
+}
+
+const siteGroup = {
+  header: 'Site',
+  items: [
+    { title: 'Back to Site', icon: HomeIcon, to: '/' }
+  ] satisfies NavItem[]
+}
+
+const { data: session } = await useAuthSession()
+const isSuperAdmin = computed(() => hasRole(session.value?.user.role, 'super-admin'))
+
+const groups = computed(() =>
+  isSuperAdmin.value
+    ? [adminGroup, developerGroup, accountGroup, siteGroup]
+    : [adminGroup, accountGroup, siteGroup]
+)
 
 const route = useRoute()
 const isActive = (item: NavItem) =>

@@ -27,3 +27,6 @@ logs
 
 # Headless E2E artifacts (screenshots on failure)
 .e2e-artifacts/
+
+# ZCode agent session artifacts
+.zcode/

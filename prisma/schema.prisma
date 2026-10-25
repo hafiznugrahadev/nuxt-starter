@@ -94,3 +94,20 @@ model Setting {
 
   @@map("setting")
 }
+
+// Reference CRUD resource for the super-admin task manager (developer
+// helper). Status/priority are stored as plain strings constrained by the
+// shared registry in shared/utils/dev-tasks.ts.
+model DevTask {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("todo")
+  priority    String    @default("medium")
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@map("dev_task")
+}
