@@ -131,7 +131,7 @@ services:
       - "8025"
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: nuxt_starter_db
     restart: unless-stopped
     # No ports are published. From the host, connect to
