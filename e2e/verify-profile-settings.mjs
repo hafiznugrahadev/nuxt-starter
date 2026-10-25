@@ -53,25 +53,35 @@ async function openHydrated(p, url, selector) {
   ).catch(() => { /* plain elements without a vue instance: continue */ })
 }
 
+// Fill and submit the login form, retrying when the click races hydration
+// (a native GET submit leaves the URL on "/login?...") or the navigation is
+// bounced while the old session cookie is still being cleared.
+async function submitLoginForm(p, email, password, attempts = 3) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    await openHydrated(p, `${BASE}/login`, '#email')
+    await p.locator('#email').fill(email)
+    await p.locator('#password').fill(password)
+    await p.getByRole('button', { name: 'Sign in' }).click()
+    await p.waitForURL(u => !u.href.includes('/login') || u.href.includes('/login?'), { timeout: 20000 }).catch(() => {})
+    if (!p.url().includes('/login')) {
+      await p.waitForLoadState('load')
+      return
+    }
+  }
+  throw new Error(`sign-in did not navigate (at ${p.url()})`)
+}
+
 async function login(p) {
-  await openHydrated(p, `${BASE}/login`, '#email')
-  await p.locator('#email').fill(ADMIN_EMAIL)
-  await p.locator('#password').fill(ADMIN_PASSWORD)
-  await p.getByRole('button', { name: 'Sign in' }).click()
-  // 30s: right after a container restart the first sign-in compiles the dev
-  // bundle and can easily exceed 15s once.
+  // 20s per attempt: right after a container restart the first sign-in
+  // compiles the dev bundle and can easily exceed the default timeout.
+  await submitLoginForm(p, ADMIN_EMAIL, ADMIN_PASSWORD)
   await p.waitForURL(/\/admin|\/$/, { timeout: 30000 })
 }
 
 // Deterministic sign-in: always navigate freshly (a post-logout fill races
 // the full-page load and can leave fields empty).
 async function signIn(p, email, password) {
-  await openHydrated(p, `${BASE}/login`, '#email')
-  await p.locator('#email').fill(email)
-  await p.locator('#password').fill(password)
-  await p.getByRole('button', { name: 'Sign in' }).click()
-  await p.waitForURL(url => !url.href.includes('/login'), { timeout: 30000 })
-  await p.waitForLoadState('load')
+  await submitLoginForm(p, email, password)
 }
 
 async function setRegistration(enabled) {
@@ -181,12 +191,19 @@ await step('anonymous visitor can sign up again', async () => {
   await page.waitForTimeout(11000)
   await anonCtx.clearCookies()
   const anon = await anonCtx.newPage()
-  await openHydrated(anon, `${BASE}/register`, '#name')
-  await anon.locator('#name').fill('Settings Check')
-  await anon.locator('#email').fill('settings-check@example.com')
-  await anon.locator('#password').fill('password123')
-  await anon.getByRole('button', { name: /sign up|create/i }).click()
-  await anon.waitForURL(url => !url.href.includes('/register'), { timeout: 15000 })
+  // Retry when the submit click races hydration (native GET -> /register?...).
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await openHydrated(anon, `${BASE}/register`, '#name')
+    await anon.locator('#name').fill('Settings Check')
+    await anon.locator('#email').fill('settings-check@example.com')
+    await anon.locator('#password').fill('password123')
+    await anon.getByRole('button', { name: /sign up|create/i }).click()
+    await anon.waitForURL(u => !u.href.includes('/register') || u.href.includes('/register?'), { timeout: 20000 }).catch(() => {})
+    if (!anon.url().includes('/register')) break
+  }
+  if (anon.url().includes('/register')) {
+    throw new Error(`sign-up did not navigate (at ${anon.url()})`)
+  }
   await anon.close()
   await anonCtx.clearCookies()
 })
@@ -279,6 +296,7 @@ await step('change password, sign in with new password, restore original', async
   await page.getByRole('button', { name: 'Account menu' }).click()
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
   await page.waitForURL(/\/login/, { timeout: 15000 })
+  await page.waitForLoadState('load')
   await signIn(page, ADMIN_EMAIL, TEMP_PASSWORD)
 
   // restore the original password
@@ -292,6 +310,7 @@ await step('change password, sign in with new password, restore original', async
   await page.getByRole('button', { name: 'Account menu' }).click()
   await page.getByRole('menuitem', { name: 'Sign out' }).click()
   await page.waitForURL(/\/login/, { timeout: 15000 })
+  await page.waitForLoadState('load')
   await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD)
 })
 
