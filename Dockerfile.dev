@@ -2,7 +2,7 @@
 # The project source is bind-mounted at runtime (see docker-compose.yml); the
 # baked-in node_modules and generated Prisma client are kept via named/anonymous
 # volumes so they are not shadowed by the host mount.
-FROM oven/bun:1.3
+FROM oven/bun:1.4
 
 WORKDIR /app
 

@@ -2,7 +2,7 @@
 
 # ---- Build stage ----------------------------------------------------------
 # Full dependency tree: build the Nuxt/Nitro server output.
-FROM oven/bun:1.3 AS build
+FROM oven/bun:1.4 AS build
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN bun run build
 # An isolated install of the runtime dependencies needed by Prisma, Better
 # Auth seeding, and the email worker. Nuxt and build-only dependencies stay in
 # the build stage.
-FROM oven/bun:1.3 AS prisma
+FROM oven/bun:1.4 AS prisma
 
 WORKDIR /app
 
@@ -47,7 +47,7 @@ RUN DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nuxt_starter bunx
 # Prisma CLI is carried only so the entrypoint can run `prisma migrate deploy`
 # on start (and `db seed` on demand) — handy for single-service platforms like
 # Dokploy where there is no separate migrate job.
-FROM oven/bun:1.3-slim AS runner
+FROM oven/bun:1.4-slim AS runner
 
 ENV NODE_ENV=production \
     NUXT_HOST=0.0.0.0 \
