@@ -117,7 +117,7 @@ async function saveSettings() {
 </script>
 
 <template>
-  <div>
+  <div class="space-y-7">
     <AdminPageHeader
       title="Settings"
       :breadcrumbs="[{ text: 'Settings' }]"
