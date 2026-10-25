@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { HomeIcon, LayoutDashboardIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@lucide/vue'
+import { BookOpenIcon, HomeIcon, LayoutDashboardIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@lucide/vue'
 import type { Component } from 'vue'
 
 // Sidebar structure mirrors the TailwindAdmin template's VerticalSidebar:
@@ -99,5 +99,27 @@ const isActive = (item: NavItem) =>
         </SidebarGroupContent>
       </SidebarGroup>
     </SidebarContent>
+
+    <!-- Pinned to the sidebar bottom; the docs entry is admin-only since the
+    whole admin shell sits behind the admin middleware. Plain <a>: /docs is a
+    full-page Scalar app outside the Nuxt router. -->
+    <SidebarFooter class="border-t p-0">
+      <SidebarMenu class="px-2 py-2">
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            as-child
+            class="h-11 rounded-lg transition-all duration-200 ease-in-out hover:translate-x-1"
+          >
+            <a
+              href="/docs"
+              class="gap-3 px-4 text-link dark:text-darklink hover:bg-lightprimary hover:text-primary"
+            >
+              <BookOpenIcon class="size-5 shrink-0" />
+              <span class="text-sm leading-5">API docs</span>
+            </a>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarFooter>
   </Sidebar>
 </template>

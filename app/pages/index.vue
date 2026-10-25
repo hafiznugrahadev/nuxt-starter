@@ -65,16 +65,6 @@ const features = [
             Sign in
           </NuxtLink>
         </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          as-child
-          class="min-h-11 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          <NuxtLink to="/docs">
-            API docs
-          </NuxtLink>
-        </Button>
       </div>
     </section>
 

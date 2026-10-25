@@ -42,21 +42,6 @@ async function logout() {
         </NuxtLink>
 
         <div class="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            as-child
-            class="focus-visible:ring-ring focus-visible:ring-offset-background min-h-11 focus-visible:ring-2 focus-visible:ring-offset-2"
-          >
-            <NuxtLink
-              to="/docs"
-              aria-label="API docs"
-            >
-              <span class="sm:hidden">Docs</span>
-              <span class="hidden sm:inline">API docs</span>
-            </NuxtLink>
-          </Button>
-
           <ColorModeButton />
 
           <template v-if="user">
