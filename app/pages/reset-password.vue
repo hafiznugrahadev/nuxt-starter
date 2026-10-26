@@ -60,113 +60,118 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex items-center justify-center px-4 py-24">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle
-          class="text-lg"
-          role="heading"
-          aria-level="1"
-        >
-          {{ completed ? 'Password updated' : invalidLink ? 'Reset link unavailable' : 'Choose a new password' }}
-        </CardTitle>
-        <CardDescription v-if="completed">
-          Sign in with your new password.
-        </CardDescription>
-        <CardDescription v-else-if="invalidLink">
-          This reset link is missing, invalid, or expired. Request a new one to continue.
-        </CardDescription>
-        <CardDescription v-else>
-          Choose a password with at least 8 characters.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
-        <div
-          v-if="completed"
-          class="space-y-4"
-          role="status"
-          aria-live="polite"
-        >
-          <p class="text-sm">
-            Your password has been changed. Other active sessions have been signed out.
-          </p>
-          <NuxtLink
-            to="/login"
-            class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Sign in
-          </NuxtLink>
-        </div>
-
-        <div
-          v-else-if="invalidLink"
-          class="space-y-4"
-          role="alert"
-          aria-live="polite"
-        >
-          <NuxtLink
-            to="/forgot-password"
-            class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Request another reset link
-          </NuxtLink>
-        </div>
-
-        <form
-          v-else
-          class="space-y-4"
-          @submit.prevent="onSubmit()"
-        >
-          <FormField
-            id="password"
-            v-model="state.password"
-            label="New password"
-            type="password"
-            autocomplete="new-password"
-            :error="errors.password"
-          />
-
-          <FormField
-            id="confirmation"
-            v-model="state.confirmation"
-            label="Confirm new password"
-            type="password"
-            autocomplete="new-password"
-            :error="errors.confirmation"
-          />
-
-          <p
-            v-if="requestError"
-            class="text-destructive text-sm"
-            role="alert"
-            aria-live="polite"
-          >
-            {{ requestError }}
-          </p>
-
-          <Button
-            type="submit"
-            class="w-full"
-            :disabled="loading"
-            :aria-busy="loading"
-          >
-            {{ loading ? 'Updating password…' : 'Update password' }}
-          </Button>
-        </form>
-      </CardContent>
-
-      <CardFooter
-        v-if="!completed && !invalidLink"
-        class="justify-center text-sm"
+  <AuthSplitCard>
+    <div class="space-y-1.5">
+      <h1
+        class="text-lg font-semibold"
+        role="heading"
+        aria-level="1"
       >
-        <NuxtLink
-          to="/login"
-          class="inline-flex min-h-11 items-center rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          Back to sign in
-        </NuxtLink>
-      </CardFooter>
-    </Card>
-  </div>
+        {{ completed ? 'Password updated' : invalidLink ? 'Reset link unavailable' : 'Choose a new password' }}
+      </h1>
+      <p
+        v-if="completed"
+        class="text-muted-foreground text-sm"
+      >
+        Sign in with your new password.
+      </p>
+      <p
+        v-else-if="invalidLink"
+        class="text-muted-foreground text-sm"
+      >
+        This reset link is missing, invalid, or expired. Request a new one to continue.
+      </p>
+      <p
+        v-else
+        class="text-muted-foreground text-sm"
+      >
+        Choose a password with at least 8 characters.
+      </p>
+    </div>
+
+    <div
+      v-if="completed"
+      class="space-y-4"
+      role="status"
+      aria-live="polite"
+    >
+      <p class="text-sm">
+        Your password has been changed. Other active sessions have been signed out.
+      </p>
+      <NuxtLink
+        to="/login"
+        class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Sign in
+      </NuxtLink>
+    </div>
+
+    <div
+      v-else-if="invalidLink"
+      class="space-y-4"
+      role="alert"
+      aria-live="polite"
+    >
+      <NuxtLink
+        to="/forgot-password"
+        class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Request another reset link
+      </NuxtLink>
+    </div>
+
+    <form
+      v-else
+      class="space-y-4"
+      @submit.prevent="onSubmit()"
+    >
+      <FormField
+        id="password"
+        v-model="state.password"
+        label="New password"
+        type="password"
+        autocomplete="new-password"
+        :error="errors.password"
+      />
+
+      <FormField
+        id="confirmation"
+        v-model="state.confirmation"
+        label="Confirm new password"
+        type="password"
+        autocomplete="new-password"
+        :error="errors.confirmation"
+      />
+
+      <p
+        v-if="requestError"
+        class="text-destructive text-sm"
+        role="alert"
+        aria-live="polite"
+      >
+        {{ requestError }}
+      </p>
+
+      <Button
+        type="submit"
+        class="w-full"
+        :disabled="loading"
+        :aria-busy="loading"
+      >
+        {{ loading ? 'Updating password…' : 'Update password' }}
+      </Button>
+    </form>
+
+    <p
+      v-if="!completed && !invalidLink"
+      class="text-muted-foreground text-center text-sm"
+    >
+      <NuxtLink
+        to="/login"
+        class="inline-flex min-h-11 items-center rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Back to sign in
+      </NuxtLink>
+    </p>
+  </AuthSplitCard>
 </template>

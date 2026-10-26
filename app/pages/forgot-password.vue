@@ -49,85 +49,81 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex items-center justify-center px-4 py-24">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle
-          class="text-lg"
-          role="heading"
-          aria-level="1"
-        >
-          Forgot password?
-        </CardTitle>
-        <CardDescription>
-          Enter your account email to request a password reset link.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
-        <div
-          v-if="submitted"
-          class="space-y-4"
-          role="status"
-          aria-live="polite"
-        >
-          <p class="text-sm">
-            If an account uses this address, check its inbox for a password reset link.
-          </p>
-          <NuxtLink
-            to="/login"
-            class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Return to sign in
-          </NuxtLink>
-        </div>
-
-        <form
-          v-else
-          class="space-y-4"
-          @submit.prevent="onSubmit()"
-        >
-          <FormField
-            id="email"
-            v-model="email"
-            label="Email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            :error="emailError"
-          />
-
-          <p
-            v-if="requestError"
-            class="text-destructive text-sm"
-            role="alert"
-            aria-live="polite"
-          >
-            {{ requestError }}
-          </p>
-
-          <Button
-            type="submit"
-            class="w-full"
-            :disabled="loading"
-            :aria-busy="loading"
-          >
-            {{ loading ? 'Sending request…' : 'Send reset link' }}
-          </Button>
-        </form>
-      </CardContent>
-
-      <CardFooter
-        v-if="!submitted"
-        class="justify-center text-sm"
+  <AuthSplitCard>
+    <div class="space-y-1.5">
+      <h1
+        class="text-lg font-semibold"
+        role="heading"
+        aria-level="1"
       >
-        <NuxtLink
-          to="/login"
-          class="inline-flex min-h-11 items-center rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          Back to sign in
-        </NuxtLink>
-      </CardFooter>
-    </Card>
-  </div>
+        Forgot password?
+      </h1>
+      <p class="text-muted-foreground text-sm">
+        Enter your account email to request a password reset link.
+      </p>
+    </div>
+
+    <div
+      v-if="submitted"
+      class="space-y-4"
+      role="status"
+      aria-live="polite"
+    >
+      <p class="text-sm">
+        If an account uses this address, check its inbox for a password reset link.
+      </p>
+      <NuxtLink
+        to="/login"
+        class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Return to sign in
+      </NuxtLink>
+    </div>
+
+    <form
+      v-else
+      class="space-y-4"
+      @submit.prevent="onSubmit()"
+    >
+      <FormField
+        id="email"
+        v-model="email"
+        label="Email"
+        type="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        :error="emailError"
+      />
+
+      <p
+        v-if="requestError"
+        class="text-destructive text-sm"
+        role="alert"
+        aria-live="polite"
+      >
+        {{ requestError }}
+      </p>
+
+      <Button
+        type="submit"
+        class="w-full"
+        :disabled="loading"
+        :aria-busy="loading"
+      >
+        {{ loading ? 'Sending request…' : 'Send reset link' }}
+      </Button>
+    </form>
+
+    <p
+      v-if="!submitted"
+      class="text-muted-foreground text-center text-sm"
+    >
+      <NuxtLink
+        to="/login"
+        class="inline-flex min-h-11 items-center rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Back to sign in
+      </NuxtLink>
+    </p>
+  </AuthSplitCard>
 </template>

@@ -55,76 +55,74 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex items-center justify-center px-4 py-24">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle
-          class="text-lg"
-          role="heading"
-          aria-level="1"
-        >
-          Create account
-        </CardTitle>
-        <CardDescription>Sign up with your email and a password.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
-          class="space-y-4"
-          @submit.prevent="onSubmit()"
-        >
-          <FormField
-            id="name"
-            v-model="state.name"
-            label="Name"
-            placeholder="Jane Doe"
-            autocomplete="name"
-            :error="errors.name"
-          />
+  <AuthSplitCard>
+    <div class="space-y-1.5">
+      <h1
+        class="text-lg font-semibold"
+        role="heading"
+        aria-level="1"
+      >
+        Create account
+      </h1>
+      <p class="text-muted-foreground text-sm">
+        Sign up with your email and a password.
+      </p>
+    </div>
 
-          <FormField
-            id="email"
-            v-model="state.email"
-            label="Email"
-            type="email"
-            placeholder="jane@example.com"
-            autocomplete="email"
-            :error="errors.email"
-          />
+    <form
+      class="space-y-4"
+      @submit.prevent="onSubmit()"
+    >
+      <FormField
+        id="name"
+        v-model="state.name"
+        label="Name"
+        placeholder="Jane Doe"
+        autocomplete="name"
+        :error="errors.name"
+      />
 
-          <FormField
-            id="password"
-            v-model="state.password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            autocomplete="new-password"
-            :error="errors.password"
-          />
+      <FormField
+        id="email"
+        v-model="state.email"
+        label="Email"
+        type="email"
+        placeholder="jane@example.com"
+        autocomplete="email"
+        :error="errors.email"
+      />
 
-          <Button
-            type="submit"
-            class="w-full"
-            :disabled="loading"
-          >
-            <Loader2Icon
-              v-if="loading"
-              class="animate-spin"
-            />
-            Create account
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter class="text-muted-foreground justify-center text-sm">
-        <p>
-          Already have an account?
-          <NuxtLink
-            to="/login"
-            class="inline-flex min-h-11 items-center rounded-sm text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Sign in
-          </NuxtLink>
-        </p>
-      </CardFooter>
-    </Card>
-  </div>
+      <FormField
+        id="password"
+        v-model="state.password"
+        label="Password"
+        type="password"
+        placeholder="••••••••"
+        autocomplete="new-password"
+        :error="errors.password"
+      />
+
+      <Button
+        type="submit"
+        class="w-full"
+        :disabled="loading"
+      >
+        <Loader2Icon
+          v-if="loading"
+          class="animate-spin"
+        />
+        Create account
+      </Button>
+    </form>
+
+    <p class="text-muted-foreground text-center text-sm">
+      Already have an account?
+      <NuxtLink
+        to="/login"
+        class="inline-flex min-h-11 items-center rounded-sm text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Sign in
+      </NuxtLink>
+    </p>
+  </AuthSplitCard>
 </template>

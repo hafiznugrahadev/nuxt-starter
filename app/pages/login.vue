@@ -57,79 +57,77 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex items-center justify-center px-4 py-24">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle
-          class="text-lg"
-          role="heading"
-          aria-level="1"
-        >
-          Sign in
-        </CardTitle>
-        <CardDescription>Use your credentials to continue.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
-          class="space-y-4"
-          @submit.prevent="onSubmit()"
-        >
-          <FormField
-            id="email"
-            v-model="state.email"
-            label="Email"
-            type="email"
-            placeholder="admin@example.com"
-            autocomplete="email"
-            :error="errors.email"
-          />
-
-          <FormField
-            id="password"
-            v-model="state.password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            :error="errors.password"
-          />
-
-          <div class="flex justify-end">
-            <NuxtLink
-              to="/forgot-password"
-              class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              Forgot password?
-            </NuxtLink>
-          </div>
-
-          <Button
-            type="submit"
-            class="w-full"
-            :disabled="loading"
-          >
-            <Loader2Icon
-              v-if="loading"
-              class="animate-spin"
-            />
-            Sign in
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter
-        v-if="registrationEnabled"
-        class="text-muted-foreground justify-center text-sm"
+  <AuthSplitCard>
+    <div class="space-y-1.5">
+      <h1
+        class="text-lg font-semibold"
+        role="heading"
+        aria-level="1"
       >
-        <p>
-          No account yet?
-          <NuxtLink
-            to="/register"
-            class="inline-flex min-h-11 items-center rounded-sm text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Create one
-          </NuxtLink>
-        </p>
-      </CardFooter>
-    </Card>
-  </div>
+        Sign in
+      </h1>
+      <p class="text-muted-foreground text-sm">
+        Use your credentials to continue.
+      </p>
+    </div>
+
+    <form
+      class="space-y-4"
+      @submit.prevent="onSubmit()"
+    >
+      <FormField
+        id="email"
+        v-model="state.email"
+        label="Email"
+        type="email"
+        placeholder="admin@example.com"
+        autocomplete="email"
+        :error="errors.email"
+      />
+
+      <FormField
+        id="password"
+        v-model="state.password"
+        label="Password"
+        type="password"
+        placeholder="••••••••"
+        autocomplete="current-password"
+        :error="errors.password"
+      />
+
+      <div class="flex justify-end">
+        <NuxtLink
+          to="/forgot-password"
+          class="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Forgot password?
+        </NuxtLink>
+      </div>
+
+      <Button
+        type="submit"
+        class="w-full"
+        :disabled="loading"
+      >
+        <Loader2Icon
+          v-if="loading"
+          class="animate-spin"
+        />
+        Sign in
+      </Button>
+    </form>
+
+    <p
+      v-if="registrationEnabled"
+      class="text-muted-foreground text-center text-sm"
+    >
+      No account yet?
+      <NuxtLink
+        to="/register"
+        class="inline-flex min-h-11 items-center rounded-sm text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        Create one
+      </NuxtLink>
+    </p>
+  </AuthSplitCard>
 </template>
