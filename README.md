@@ -35,18 +35,57 @@ The admin area's visual design (sidebar shell, palette, page-header cards) is ad
 - 🐳 **Docker** dev stack with hot reload + a production image and compose files.
 - 🌱 **`bun run seed:admin`**. Admin seeding reads env vars and is idempotent (plus `seed:users` for demo data). Seeds create users through Better Auth (`auth.api.createUser`), so hashes match production behavior.
 
-## Quick start (npm installer)
+## Installation
 
-Scaffold a fresh copy of this starter with the published installer — it
-downloads the latest template from GitHub, generates `.env` with fresh
-secrets, and prints the setup steps:
+### Prerequisites
+
+| Tool                | Why                                                        | Version       |
+| ------------------- | ---------------------------------------------------------- | ------------- |
+| [Bun](https://bun.sh) | Package manager + runs the app, worker and seed scripts  | ≥ 1.3         |
+| [Docker](https://docker.com) | PostgreSQL, Redis (×2) and Mailpit via the bundled compose file | any   |
+| Git                 | Cloning (and the installer's optional `git init`)           | any           |
+
+The npm installer itself only needs Node ≥ 18.17 or Bun on the machine you
+scaffold from.
+
+### Option 1 — npm installer (recommended)
+
+The published installer scaffolds a fresh copy of this template, downloads the
+latest source from GitHub, skips repository-only entries, generates `.env`
+with a fresh `BETTER_AUTH_SECRET` and a random admin password (printed at the
+end), and can initialize a git repository:
 
 ```bash
+# scaffold into ./my-app (≈ composer create-project)
 npm create @hafiznugraha.dev/nuxt-starter@latest my-app
+
+# equivalents
+bun create @hafiznugraha.dev/nuxt-starter my-app
+npx @hafiznugraha.dev/create-nuxt-starter my-app
+
+# or install once and use it anywhere
+npm i -g @hafiznugraha.dev/create-nuxt-starter
+create-nuxt-starter my-app
 ```
 
-The installer lives in [`create-nuxt-starter/`](./create-nuxt-starter) in
-this repository. Manual setup (clone + configure) is documented below.
+Omit the directory to be prompted for one. Extra flags: `--ref <branch|tag>`
+scaffolds a specific version, `--git` / `--no-git` controls repository
+initialization (flags go after `--` with `npm create`). When the command
+finishes it prints the exact next steps — the same steps 1–6 of the manual
+path below, minus the `.env` creation it already did for you.
+
+The installer lives in [`create-nuxt-starter/`](./create-nuxt-starter) in this
+repository.
+
+### Option 2 — clone manually
+
+```bash
+git clone https://github.com/hafiznugrahadev/nuxt-starter.git my-app
+cd my-app
+```
+
+Then follow every step in [Getting started](#getting-started) below, including
+creating `.env` from `.env.example`.
 
 ## Getting started
 
