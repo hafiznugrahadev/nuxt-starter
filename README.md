@@ -100,14 +100,14 @@ end), and can initialize a git repository:
 
 ```bash
 # scaffold into ./my-app (≈ composer create-project)
-npm create @hafiznugraha.dev/nuxt-starter@latest my-app
+npm create @hafiznugrahadev/nuxt-starter@latest my-app
 
 # equivalents
-bun create @hafiznugraha.dev/nuxt-starter my-app
-npx @hafiznugraha.dev/create-nuxt-starter my-app
+bun create @hafiznugrahadev/nuxt-starter my-app
+npx @hafiznugrahadev/create-nuxt-starter my-app
 
 # or install once and use it anywhere
-npm i -g @hafiznugraha.dev/create-nuxt-starter
+npm i -g @hafiznugrahadev/create-nuxt-starter
 create-nuxt-starter my-app
 ```
 

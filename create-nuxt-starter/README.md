@@ -1,4 +1,4 @@
-# @hafiznugraha.dev/create-nuxt-starter
+# @hafiznugrahadev/create-nuxt-starter
 
 npm installer that scaffolds the
 [nuxt-starter](https://github.com/hafiznugrahadev/nuxt-starter) template
@@ -7,10 +7,10 @@ npm installer that scaffolds the
 ## Usage
 
 ```bash
-npm create @hafiznugraha.dev/nuxt-starter@latest my-app
+npm create @hafiznugrahadev/nuxt-starter@latest my-app
 # or
-bun create @hafiznugraha.dev/nuxt-starter my-app
-npx @hafiznugraha.dev/create-nuxt-starter my-app
+bun create @hafiznugrahadev/nuxt-starter my-app
+npx @hafiznugrahadev/create-nuxt-starter my-app
 ```
 
 The installer downloads the template tarball from GitHub at run time, so it
@@ -37,7 +37,10 @@ It also:
 ## Publishing
 
 From this directory (requires an npm account with write access to the
-`hafiznugraha.dev` scope — currently the `hafiznugraha.dev` user account):
+`@hafiznugrahadev` scope):
+
+Before publishing, set the `name` in `package.json` to
+`@hafiznugrahadev/create-nuxt-starter`; the current name uses a different scope.
 
 ```bash
 bun install          # or npm install
