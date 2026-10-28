@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Installer for the nuxt-starter template (hafiznugrahadev/nuxt-starter).
 //
-//   npm create @hafiznugraha.dev/nuxt-starter@latest my-app
-//   bun  create @hafiznugraha.dev/nuxt-starter my-app
-//   npx  @hafiznugraha.dev/create-nuxt-starter my-app --ref main
+//   npm create @hafiznugrahadev/nuxt-starter@latest my-app
+//   bun  create @hafiznugrahadev/nuxt-starter my-app
+//   npx  @hafiznugrahadev/create-nuxt-starter my-app --ref main
 //
 // The template is fetched as a tarball of the GitHub repo at install time,
 // so every run scaffolds the latest state of the chosen ref. Installer-only
@@ -15,6 +15,7 @@ import { existsSync } from 'node:fs'
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import * as p from '@clack/prompts'
 import * as tar from 'tar'
 
@@ -23,7 +24,7 @@ const DEFAULT_REF = 'main'
 // Repository-specific entries that do not belong to a freshly scaffolded app.
 const SKIP_ENTRIES = new Set(['create-nuxt-starter'])
 const USAGE = `
-  npm create @hafiznugraha.dev/nuxt-starter@latest [dir] [options]
+  npm create @hafiznugrahadev/nuxt-starter@latest [dir] [options]
 
   Options:
     --ref <git-ref>   Branch or tag to scaffold from (default: main)
@@ -54,6 +55,54 @@ function generateEnv(example) {
     content: example
       .replace(/^BETTER_AUTH_SECRET=.*$/m, `BETTER_AUTH_SECRET="${authSecret}"`)
       .replace(/^ADMIN_PASSWORD=.*$/m, `ADMIN_PASSWORD="${adminPassword}"`)
+  }
+}
+
+function normalizeProjectName(value) {
+  const name = value
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '')
+
+  if (!name) throw new Error('Project directory must include letters or numbers.')
+  return name
+}
+
+async function personalizeProject(targetDir, projectName) {
+  const databaseName = projectName.replace(/-/g, '_')
+  const packageJsonPath = path.join(targetDir, 'package.json')
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'))
+  packageJson.name = projectName
+  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+
+  const lockPath = path.join(targetDir, 'bun.lock')
+  const lock = await readFile(lockPath, 'utf8')
+  await writeFile(lockPath, lock.replace(/("name"\s*:\s*)"nuxt-starter"/, `$1${JSON.stringify(projectName)}`))
+
+  for (const file of ['docker-compose.yml', 'docker-compose.prod.yml']) {
+    const filePath = path.join(targetDir, file)
+    let compose = await readFile(filePath, 'utf8')
+    compose = compose
+      .replace(/^    container_name: .*\n/gm, '')
+      .replaceAll('nuxt_starter', databaseName)
+      .replaceAll('nuxt-starter.orb.local', `${projectName}.orb.local`)
+    compose = `name: ${file === 'docker-compose.prod.yml' ? `${projectName}-prod` : projectName}\n${compose}`
+    await writeFile(filePath, compose)
+  }
+
+  for (const file of ['.env.example', '.github/workflows/ci.yml', 'e2e/verify-dev-tasks.mjs', 'e2e/verify-profile-settings.mjs', 'e2e/verify-users-page.mjs']) {
+    const filePath = path.join(targetDir, file)
+    let contents
+    try {
+      contents = await readFile(filePath, 'utf8')
+    } catch (error) {
+      if (error.code === 'ENOENT') continue
+      throw error
+    }
+    contents = contents
+      .replaceAll('nuxt_starter', databaseName)
+      .replaceAll('nuxt-starter.orb.local', `${projectName}.orb.local`)
+    await writeFile(filePath, contents)
   }
 }
 
@@ -113,7 +162,7 @@ async function main() {
 
   const dirRaw = String(dir).trim()
   const targetDir = path.resolve(process.cwd(), dirRaw)
-  const projectName = path.basename(targetDir)
+  const projectName = normalizeProjectName(path.basename(targetDir))
 
   if (existsSync(targetDir) && (await readdir(targetDir)).length > 0) {
     const overwrite = await p.confirm({
@@ -132,6 +181,9 @@ async function main() {
     spinner.message('Copying template files')
     await copyTemplate(templateDir, targetDir)
     await rm(tempDir, { recursive: true, force: true })
+
+    spinner.message('Personalizing project names')
+    await personalizeProject(targetDir, projectName)
 
     spinner.message('Generating .env')
     const env = generateEnv(await readFile(path.join(targetDir, '.env.example'), 'utf8'))
@@ -171,7 +223,11 @@ Then sign in at http://localhost:3000 (admin area under /admin).
   p.outro('Happy building!')
 }
 
-main().catch((error) => {
-  p.cancel(String(error?.message || error))
-  process.exit(1)
-})
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    p.cancel(String(error?.message || error))
+    process.exit(1)
+  })
+}
+
+export { normalizeProjectName, personalizeProject }

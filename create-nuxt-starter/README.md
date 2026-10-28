@@ -26,6 +26,9 @@ always scaffolds the latest state of the branch/tag:
 It also:
 
 - skips installer-only entries (`create-nuxt-starter/`),
+- renames the generated package and Compose project to match `[dir]`, and
+- gives each scaffold its own database name, Compose network, volumes, and
+  OrbStack hostnames (for example, `my-app` uses database `my_app`),
 - generates `.env` from `.env.example` with a fresh `BETTER_AUTH_SECRET` and
   a random `ADMIN_PASSWORD` (printed at the end),
 - prints the exact next steps (`bun install`, compose services, migrations,
@@ -39,14 +42,11 @@ It also:
 From this directory (requires an npm account with write access to the
 `@hafiznugrahadev` scope):
 
-Before publishing, set the `name` in `package.json` to
-`@hafiznugrahadev/create-nuxt-starter`; the current name uses a different scope.
-
 ```bash
 bun install          # or npm install
 npm publish --access public
 ```
 
-Bump `version` in `package.json` per release. The template itself is not
-bundled — it is fetched from GitHub — so installer releases are only needed
-when the CLI logic or its defaults change.
+Bump `version` in `package.json` per release. Run `npm test` before publishing.
+The template itself is not bundled; it is fetched from GitHub, so installer
+releases are only needed when the CLI logic or its defaults change.

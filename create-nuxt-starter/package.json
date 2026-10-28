@@ -1,14 +1,18 @@
 {
-  "name": "@hafiznugraha.dev/create-nuxt-starter",
-  "version": "0.1.0",
+  "name": "@hafiznugrahadev/create-nuxt-starter",
+  "version": "0.1.1",
   "description": "Scaffold a Nuxt 4 app with Better Auth, multi-role admin, Prisma and Redis from the nuxt-starter template.",
   "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
   "license": "MIT",
   "bin": {
     "create-nuxt-starter": "src/index.mjs"
   },
   "files": [
-    "src"
+    "src",
+    "test"
   ],
   "engines": {
     "node": ">=18.17"
