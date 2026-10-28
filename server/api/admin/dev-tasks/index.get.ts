@@ -1,6 +1,11 @@
 import type { Prisma } from '../../../../generated/prisma/client'
 import { z } from 'zod'
-import { DEV_TASK_PRIORITIES, DEV_TASK_STATUSES } from '#shared/utils/dev-tasks'
+import {
+  DEV_TASK_PRIORITIES,
+  DEV_TASK_STATUSES,
+  devTaskPrioritySchema,
+  devTaskStatusSchema
+} from '#shared/utils/dev-tasks'
 import { requireSuperAdmin } from '../../../utils/guard'
 import { prisma } from '../../../utils/prisma'
 
@@ -8,8 +13,8 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
   search: z.string().trim().max(200).optional(),
-  status: z.enum(DEV_TASK_STATUSES).optional(),
-  priority: z.enum(DEV_TASK_PRIORITIES).optional(),
+  status: devTaskStatusSchema.optional(),
+  priority: devTaskPrioritySchema.optional(),
   sortBy: z.enum(['title', 'status', 'priority', 'dueDate', 'createdAt']).default('createdAt'),
   sortDirection: z.enum(['asc', 'desc']).default('desc')
 })

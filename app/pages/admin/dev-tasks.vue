@@ -16,6 +16,7 @@ import { z } from 'zod'
 import {
   DEV_TASK_PRIORITIES,
   DEV_TASK_STATUSES,
+  devTaskBaseSchema,
   devTaskPriorityLabel,
   devTaskStatusLabel
 } from '#shared/utils/dev-tasks'
@@ -73,12 +74,8 @@ const formErrors = reactive<{ title?: string }>({})
 
 const isEditing = computed(() => editing.value !== null)
 
-const formSchema = z.object({
-  title: z.string().trim().min(1, 'Title is required').max(200),
-  description: z.string().trim().max(2000),
-  status: z.enum(DEV_TASK_STATUSES),
-  priority: z.enum(DEV_TASK_PRIORITIES),
-  dueDate: z.string()
+const formSchema = devTaskBaseSchema.extend({
+  dueDate: z.string() // yyyy-mm-dd from the date input; '' = no due date
 })
 
 const statusOptions = DEV_TASK_STATUSES.map(value => ({ label: devTaskStatusLabel(value), value }))

@@ -1,15 +1,17 @@
 import { z } from 'zod'
-import { DEV_TASK_PRIORITIES, DEV_TASK_STATUSES } from '#shared/utils/dev-tasks'
+import {
+  DEV_TASK_PRIORITIES,
+  DEV_TASK_STATUSES,
+  devTaskBaseSchema,
+  devTaskDescriptionSchema
+} from '#shared/utils/dev-tasks'
 import { requireSuperAdmin } from '../../../utils/guard'
 import { prisma } from '../../../utils/prisma'
 
 const paramsSchema = z.object({ id: z.string() })
 
-const bodySchema = z.object({
-  title: z.string().trim().min(1, 'Title is required').max(200).optional(),
-  description: z.string().trim().max(2000).nullable().optional(),
-  status: z.enum(DEV_TASK_STATUSES).optional(),
-  priority: z.enum(DEV_TASK_PRIORITIES).optional(),
+const bodySchema = devTaskBaseSchema.partial().extend({
+  description: devTaskDescriptionSchema.nullable().optional(),
   // null clears the due date; omitting it keeps the current value.
   dueDate: z.coerce.date().nullable().optional()
 }).refine(body => Object.keys(body).length > 0, {
