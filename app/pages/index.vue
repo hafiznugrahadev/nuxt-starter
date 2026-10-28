@@ -45,7 +45,7 @@ const features = [
   }
 ]
 
-const INSTALL_COMMAND = 'npm create @hafiznugraha.dev/nuxt-starter@latest my-app'
+const INSTALL_COMMAND = 'npm create @manusiakemos/nuxt-starter@latest my-app'
 
 const copied = ref(false)
 

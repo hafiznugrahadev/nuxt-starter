@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@hafiznugrahadev/create-nuxt-starter",
+      "name": "@manusiakemos/create-nuxt-starter",
       "dependencies": {
         "@clack/prompts": "^1.0.0",
         "tar": "^7.4.0",

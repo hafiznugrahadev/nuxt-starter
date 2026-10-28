@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Installer for the nuxt-starter template (hafiznugrahadev/nuxt-starter).
 //
-//   npm create @hafiznugrahadev/nuxt-starter@latest my-app
-//   bun  create @hafiznugrahadev/nuxt-starter my-app
-//   npx  @hafiznugrahadev/create-nuxt-starter my-app --ref main
+//   npm create @manusiakemos/nuxt-starter@latest my-app
+//   bun  create @manusiakemos/nuxt-starter my-app
+//   npx  @manusiakemos/create-nuxt-starter my-app --ref main
 //
 // The template is fetched as a tarball of the GitHub repo at install time,
 // so every run scaffolds the latest state of the chosen ref. Installer-only
@@ -24,7 +24,7 @@ const DEFAULT_REF = 'main'
 // Repository-specific entries that do not belong to a freshly scaffolded app.
 const SKIP_ENTRIES = new Set(['create-nuxt-starter'])
 const USAGE = `
-  npm create @hafiznugrahadev/nuxt-starter@latest [dir] [options]
+  npm create @manusiakemos/nuxt-starter@latest [dir] [options]
 
   Options:
     --ref <git-ref>   Branch or tag to scaffold from (default: main)

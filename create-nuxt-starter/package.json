@@ -1,5 +1,5 @@
 {
-  "name": "@hafiznugrahadev/create-nuxt-starter",
+  "name": "@manusiakemos/create-nuxt-starter",
   "version": "0.1.1",
   "description": "Scaffold a Nuxt 4 app with Better Auth, multi-role admin, Prisma and Redis from the nuxt-starter template.",
   "type": "module",
