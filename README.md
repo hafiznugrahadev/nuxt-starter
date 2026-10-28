@@ -6,6 +6,49 @@ A production-ready Nuxt 4 starter with [Better Auth](https://www.better-auth.com
 
 The admin area's visual design (sidebar shell, palette, page-header cards) is adapted from the [TailwindAdmin free template](https://github.com/Tailwind-Admin/free-tailwind-admin-dashboard-template) (MIT); the `ui/sidebar` components come from the same source. Dashboard statistics are computed live from the database.
 
+## Reusable money input and combobox
+
+`FormField` supports `type="money"` for whole rupiah values. Its model is a
+number, or `null` when empty; for example, `1250000` displays as `Rp 1.250.000`.
+The underlying `MoneyInput` can also be imported from `@/components/ui/money-input`.
+Values must be non-negative safe integers. Use application validation for
+required fields and other business limits.
+
+```vue
+<script setup lang="ts">
+import type { ComboboxLoadOptions } from '@/components/ui/combobox'
+
+const amount = ref<number | null>(null)
+const userId = ref('')
+const loadUsers: ComboboxLoadOptions = async ({ search, page, pageSize, signal }) => {
+  const result = await $fetch('/api/admin/users', {
+    query: { search, page, pageSize, searchField: 'name' },
+    signal
+  })
+  return {
+    options: result.users.map(user => ({ label: user.name, value: user.id })),
+    hasMore: page * pageSize < result.total
+  }
+}
+</script>
+
+<template>
+  <FormField id="amount" v-model="amount" label="Amount" type="money" />
+  <Label for="user">User</Label>
+  <Combobox id="user" v-model="userId" :load-options="loadUsers" />
+</template>
+```
+
+Local `:options="[{ label, value }]"` usage remains supported. Option values
+must be non-empty strings. Remote search defaults to two characters, 300 ms
+debounce and 50 results per page; customize `min-search-length`, `debounce-ms`
+and `page-size` when needed. The loader must perform server-side filtering and
+pagination and return `{ options, hasMore }`; it should forward `signal` to the
+request. A load-more action fetches subsequent pages. For an initial selection
+on an edit form, pass `:selected-option="{ label, value }"`; the component
+retains a selected label as result pages change. Large loaded lists are
+virtualized from 100 options by default (`virtualize-threshold`).
+
 ## Stack
 
 | Concern         | Choice                                                                     |

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
+import { MoneyInput } from '@/components/ui/money-input'
 
 // Reusable text field: label + control + validation error / hint, with the
 // a11y wiring (Label for, aria-invalid, aria-describedby) done once. Use
@@ -21,9 +22,9 @@ const props = withDefaults(defineProps<{
   /** Neutral hint rendered below the control when there is no error. */
   hint?: string
   /** password renders the PasswordInput (show/hide toggle); other values render Input. */
-  type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'date'
+  type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'date' | 'money'
   defaultValue?: string | number
-  modelValue?: string | number
+  modelValue?: string | number | null
   class?: HTMLAttributes['class']
 }>(), {
   error: undefined,
@@ -35,7 +36,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emits = defineEmits<{
-  (e: 'update:modelValue', payload: string | number): void
+  (e: 'update:modelValue', payload: string | number | null): void
 }>()
 
 const modelValue = useVModel(props, 'modelValue', emits, {
@@ -58,21 +59,33 @@ const invalid = computed(() => Boolean(props.error))
     <PasswordInput
       v-if="type === 'password'"
       :id="id"
-      v-model="modelValue"
+      :model-value="modelValue ?? ''"
       v-bind="$attrs"
       :aria-invalid="invalid"
       :aria-describedby="descriptionId"
       :class="cn('min-h-11', props.class)"
+      @update:model-value="modelValue = $event"
+    />
+    <MoneyInput
+      v-else-if="type === 'money'"
+      :id="id"
+      :model-value="typeof modelValue === 'number' ? modelValue : null"
+      v-bind="$attrs"
+      :aria-invalid="invalid"
+      :aria-describedby="descriptionId"
+      :class="props.class"
+      @update:model-value="modelValue = $event"
     />
     <Input
       v-else
       :id="id"
-      v-model="modelValue"
+      :model-value="modelValue ?? ''"
       v-bind="$attrs"
       :type="type"
       :aria-invalid="invalid"
       :aria-describedby="descriptionId"
       :class="props.class"
+      @update:model-value="modelValue = $event"
     />
 
     <p
