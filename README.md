@@ -85,7 +85,7 @@ virtualized from 100 options by default (`virtualize-threshold`).
 | Tool                | Why                                                        | Version       |
 | ------------------- | ---------------------------------------------------------- | ------------- |
 | [Bun](https://bun.sh) | Package manager + runs the app, worker and seed scripts  | ≥ 1.3         |
-| [Docker](https://docker.com) | PostgreSQL, Redis (×2) and Mailpit via the bundled compose file | any   |
+| [Docker](https://docker.com) | PostgreSQL, Redis (×2), Mailpit and pgweb via the bundled compose file | any   |
 | Git                 | Cloning (and the installer's optional `git init`)           | any           |
 
 The npm installer itself only needs Node ≥ 18.17 or Bun on the machine you
@@ -140,10 +140,10 @@ bun install
 
 ### 2. Start PostgreSQL and supporting services
 
-A `docker-compose.yml` is included. For host development, start the database, Redis services, and Mailpit:
+A `docker-compose.yml` is included. For host development, start the database, Redis services, Mailpit, and pgweb:
 
 ```bash
-docker compose up -d postgres redis redis-queue mailpit
+docker compose up -d postgres redis redis-queue mailpit pgweb
 # OrbStack endpoints are listed in the Docker section below.
 # Otherwise set DATABASE_URL, REDIS_URL, QUEUE_REDIS_URL, and SMTP_HOST yourself.
 ```
@@ -314,7 +314,7 @@ To change the docs path or title, edit the `scalar` block in `nuxt.config.ts`.
 
 ## Docker
 
-The dev stack (`docker-compose.yml`) runs Postgres, a cache Redis, a dedicated BullMQ Redis, Mailpit, the Nuxt dev server, and an email worker. The source is bind-mounted and Vite watch-polling is enabled inside the app container.
+The dev stack (`docker-compose.yml`) runs Postgres, [pgweb](https://github.com/sosedoff/pgweb), a cache Redis, a dedicated BullMQ Redis, Mailpit, the Nuxt dev server, and an email worker. The source is bind-mounted and Vite watch-polling is enabled inside the app container.
 
 **No ports are published to the host.** Services are only `expose`d and reached through [OrbStack](https://orbstack.dev)'s per-container domains:
 
@@ -322,12 +322,19 @@ The dev stack (`docker-compose.yml`) runs Postgres, a cache Redis, a dedicated B
 | -------- | ------------------------------------------ | --------------------------- |
 | app      | <https://app.nuxt-starter.orb.local>       | HTTPS terminated by OrbStack |
 | postgres | `postgres.nuxt-starter.orb.local:5432`     | raw TCP (psql, migrations from the host) |
+| pgweb    | <http://pgweb.nuxt-starter.orb.local:8081> | database browser, connected to `nuxt_starter` |
 | redis    | `redis.nuxt-starter.orb.local:6379`        | Nitro cache with LRU eviction |
 | redis-queue | `redis-queue.nuxt-starter.orb.local:6379` | BullMQ jobs with noeviction |
 | mailpit  | <http://mailpit.nuxt-starter.orb.local:8025> | captured email inbox        |
 | SMTP     | `mailpit.nuxt-starter.orb.local:1025`      | local SMTP for the worker   |
 
-Prisma Studio binds to `127.0.0.1` only (Prisma 7), so it is not run as a compose service. Browse the database from the host instead:
+pgweb connects to the development database automatically after Postgres is healthy. To start just the database browser and its Postgres dependency:
+
+```bash
+docker compose up -d pgweb
+```
+
+Prisma Studio binds to `127.0.0.1` only (Prisma 7), so it is not run as a compose service. If you prefer Studio, run it from the host:
 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter?schema=public \

@@ -1,18 +1,19 @@
-# Development stack with hot reload, email worker and Mailpit (OrbStack-friendly).
+# Development stack with hot reload, email worker, Mailpit and pgweb (OrbStack-friendly).
 #
 #   docker compose up --build      # Postgres + the Nuxt dev server
-#   docker compose up -d postgres redis redis-queue mailpit  # host development dependencies
+#   docker compose up -d postgres redis redis-queue mailpit pgweb  # host development dependencies
 #
 # No ports are published to the host. Services are only `expose`d and are
 # reached through OrbStack's per-container domains:
 #   app:      https://app.nuxt-starter.orb.local           (TLS by OrbStack)
 #   postgres: postgres.nuxt-starter.orb.local:5432         (raw TCP)
+#   pgweb:    http://pgweb.nuxt-starter.orb.local:8081     (database browser)
 #   redis:    redis.nuxt-starter.orb.local:6379            (cache)
 #   redis-queue: redis-queue.nuxt-starter.orb.local:6379   (BullMQ jobs)
 #   mailpit:  http://mailpit.nuxt-starter.orb.local:8025   (mail inbox)
 #
 # Prisma Studio (Prisma 7) only binds 127.0.0.1, so it cannot be exposed as a
-# container service. Run it from the host against the compose database instead:
+# container service. Use pgweb above, or run Studio from the host:
 #   DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter?schema=public bun run db:studio
 #
 # First run, inside the app container, create the schema and seed the admin:
@@ -129,6 +130,18 @@ services:
     expose:
       - "1025"
       - "8025"
+
+  pgweb:
+    image: sosedoff/pgweb:0.17.0
+    container_name: nuxt_starter_pgweb
+    restart: unless-stopped
+    environment:
+      PGWEB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nuxt_starter?sslmode=disable
+    expose:
+      - "8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:17-alpine
