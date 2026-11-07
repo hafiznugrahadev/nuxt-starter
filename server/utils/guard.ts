@@ -14,8 +14,7 @@ export async function requireSession(event: H3Event) {
   return session
 }
 
-// Require an authenticated session with the admin role. Users can hold
-// several comma-separated roles, so membership is checked per entry.
+// Require an authenticated admin or super-admin session.
 export async function requireAdmin(event: H3Event) {
   const session = await requireSession(event)
 

@@ -19,7 +19,7 @@ async function main() {
   await prisma.user.deleteMany({ where: { email } })
 
   await auth.api.createUser({
-    body: { name, email, password, role: 'admin,super-admin' }
+    body: { name, email, password, role: 'super-admin' }
   })
 
   console.log('✓ Admin user is ready')

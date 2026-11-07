@@ -36,7 +36,8 @@ export function formatRoles(roles: string[]): string {
 
 /** True when a stored role string grants `expected` (comma-separated aware). */
 export function hasRole(role: string | null | undefined, expected: string): boolean {
-  return parseRoles(role).includes(expected)
+  const roles = parseRoles(role)
+  return roles.includes(expected) || (expected === 'admin' && roles.includes(SUPER_ADMIN_ROLE))
 }
 
 /** Display label for a role value ("admin" -> "Admin"). */

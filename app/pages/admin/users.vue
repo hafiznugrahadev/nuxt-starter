@@ -16,7 +16,7 @@ import {
 } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
-import { USER_ROLES, formatRoles, parseRoles, roleLabel } from '#shared/utils/roles'
+import { USER_ROLES, parseRoles, roleLabel } from '#shared/utils/roles'
 import type { AuthUser } from '~/lib/auth-client'
 import { authClient } from '~/lib/auth-client'
 
@@ -131,17 +131,13 @@ async function submitForm() {
   saving.value = true
   let error: { message?: string, status?: number } | null = null
 
-  // Better Auth stores the multi-role selection as one comma-separated
-  // string ("user,admin") in the user's `role` column.
-  const role = formatRoles(parsed.data.roles)
-
   if (isEditing.value && editing.value) {
     const result = await authClient.admin.updateUser({
       userId: editing.value.id,
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
-        role
+        role: parsed.data.roles
       }
     })
     error = result.error
@@ -158,9 +154,7 @@ async function submitForm() {
       email: parsed.data.email,
       password: parsed.data.password,
       // The plugin joins the array into the stored comma-separated string.
-      // The client type only knows better-auth's default role union, hence
-      // the cast for registry roles like 'super-admin'.
-      role: parsed.data.roles as ('user' | 'admin')[]
+      role: parsed.data.roles
     })
     error = result.error
   }

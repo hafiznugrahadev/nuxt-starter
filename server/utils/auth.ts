@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { admin, openAPI } from 'better-auth/plugins'
+import { adminOptions } from '../../shared/utils/auth-permissions'
 import { enqueuePasswordResetEmail } from './email-queue'
 import { prisma } from './prisma'
 import { getAppSettings } from './settings'
@@ -55,16 +56,8 @@ export const auth = betterAuth({
     })
   },
   plugins: [
-    // admin: role-based access (`user.role`), ban/unban and the managed
-    // /api/auth/admin/* user-management endpoints used by the admin page.
-    // `user.role` may hold several comma-separated roles ("user,admin"); the
-    // plugin grants admin access when any of them is listed in adminRoles.
-    // super-admin is a superset of admin *by convention*: holders also carry
-    // `admin` (the seed assigns "admin,super-admin"), so they pass every
-    // admin check while the extra role gates developer tooling. (Adding
-    // 'super-admin' to adminRoles is not possible: the plugin validates the
-    // list against its built-in user/admin role set.)
-    admin({ adminRoles: ['admin'], defaultRole: 'user' }),
+    // Super admins have all admin permissions without an additional stored role.
+    admin(adminOptions),
     // openAPI: /api/auth/reference (Scalar UI) for the auth surface.
     openAPI()
   ]

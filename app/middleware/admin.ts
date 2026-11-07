@@ -1,7 +1,6 @@
 import { hasRole } from '#shared/utils/roles'
 
-// Route middleware: require a signed-in user holding the admin role. Users
-// can have several comma-separated roles, hence the membership check.
+// Route middleware: require a signed-in admin or super-admin.
 export default defineNuxtRouteMiddleware(async (to) => {
   const { data: session } = await useAuthSession()
 
