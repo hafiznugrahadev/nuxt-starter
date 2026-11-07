@@ -18,6 +18,9 @@ updates:
     open-pull-requests-limit: 10
 
   # GitHub Actions (.github/workflows)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -28,6 +31,9 @@ updates:
       prefix: "chore"
 
   # Base image di Dockerfile & Dockerfile.dev
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -38,6 +44,9 @@ updates:
       prefix: "chore"
 
   # Image service di docker-compose*.yml (postgres, dll.)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "docker-compose"
     directory: "/"
     schedule:
@@ -46,3 +55,6 @@ updates:
       timezone: "Asia/Jakarta"
     commit-message:
       prefix: "chore"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
