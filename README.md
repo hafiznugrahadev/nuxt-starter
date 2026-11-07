@@ -413,6 +413,16 @@ docker compose -f docker-compose.prod.yml exec app \
   bun node_modules/prisma/build/index.js db seed
 ```
 
+### Vercel
+
+Import the repository into Vercel and keep its detected Nuxt framework preset. `vercel.json` generates the Prisma client, applies committed migrations with `prisma migrate deploy`, and builds Nuxt on each deployment. Vercel's Nuxt build does not run the Docker entrypoint. A failed migration stops the build; accounts are not seeded automatically.
+
+Set `DATABASE_URL` to a PostgreSQL service reachable from Vercel, plus `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` (the deployed application's origin). The database must be reachable during both build and runtime. Use a separate database for preview deployments so preview builds cannot migrate production data.
+
+For a pooled database connection, set `DATABASE_URL_UNPOOLED` to its direct connection URL. Only the migration step uses that URL, falling back to `DATABASE_URL` when unset; the application keeps its pooled connection. Functions deploy to Singapore (`sin1`) to match the database and queue region.
+
+Set `QUEUE_REDIS_URL` to a reachable Redis service for password-reset email and scheduled tasks; `REDIS_URL` optionally enables shared caching. Run `bun run worker` as a separate long-running worker, such as a Vercel Daemon or an external container, with the same database/queue configuration and the SMTP variables listed below. The Nuxt deployment does not start this worker automatically. Localhost and OrbStack addresses are only suitable for local development.
+
 ### Without Docker
 
 `bun run build` produces a self-contained server in `.output` (Nitro `node-server` preset). On the host, set the env vars, apply migrations, then start it:
