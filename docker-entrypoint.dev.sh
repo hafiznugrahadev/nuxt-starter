@@ -11,10 +11,15 @@ set -e
 # it converge with bun.lock on every start — no `docker volume rm` needed.
 bun install --frozen-lockfile
 
-# Keep Prisma output in sync with the bind-mounted schema. Worker containers do
-# not use Prisma and skip generation to avoid racing the app during startup.
+# Keep Prisma output in sync with the bind-mounted schema. Worker containers
+# keep their image-generated client and skip regeneration.
 if [ "${SKIP_PRISMA_GENERATE:-false}" != "true" ]; then
   bunx prisma generate
+fi
+
+if [ "${SKIP_MIGRATIONS:-false}" != "true" ] && [ -n "${DATABASE_URL:-}" ]; then
+  echo "→ Applying database migrations (prisma migrate deploy)…"
+  bun node_modules/prisma/build/index.js migrate deploy
 fi
 
 exec "$@"

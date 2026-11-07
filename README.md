@@ -345,17 +345,20 @@ DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432
 docker compose up --build
 ```
 
-On first run, create the schema and seed the admin inside the app container:
+The app applies committed migrations with `prisma migrate deploy` before starting on every boot or redeploy. If a migration fails, the app does not start. The worker skips migrations; the app owns this step.
+
+On first run, seed the admin inside the app container after startup completes:
 
 ```bash
-docker compose exec app bun run db:migrate
 docker compose exec app bun run seed:admin
 docker compose exec app bun run seed:users   # optional demo data
 ```
 
 The stack sets `BETTER_AUTH_URL=https://app.nuxt-starter.orb.local` by default. Better Auth checks the browser's `Origin` header against it and derives cookie attributes from it. Override it via `BETTER_AUTH_URL` in `.env` if you browse from a different host.
 
-Hot reload works through the bind-mounted source; the container keeps its own `node_modules` in a named volume (host deps are macOS binaries, the container needs Linux ones). The entrypoint (`docker-entrypoint.dev.sh`) runs `bun install` + `prisma generate` on **every boot**, so after changing dependencies just:
+When changing the Prisma schema, create a new migration with `docker compose exec app bun run db:migrate` and commit it. Startup applies existing migrations; it does not generate them or seed accounts.
+
+Hot reload works through the bind-mounted source; the container keeps its own `node_modules` in a named volume (host deps are macOS binaries, the container needs Linux ones). The entrypoint (`docker-entrypoint.dev.sh`) runs `bun install` + `prisma generate` + `prisma migrate deploy` on **every app boot**, so after changing dependencies just:
 
 ```bash
 docker compose up -d --build

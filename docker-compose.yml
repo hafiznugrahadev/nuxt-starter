@@ -16,13 +16,12 @@
 # container service. Use pgweb above, or run Studio from the host:
 #   DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter?schema=public bun run db:studio
 #
-# First run, inside the app container, create the schema and seed the admin:
-#   docker compose exec app bun run db:migrate
+# The app applies committed migrations on every boot. Seed the admin once:
 #   docker compose exec app bun run seed:admin
 #
 # After changing dependencies (package.json / bun.lock), just restart the
 # stack: the entrypoint (docker-entrypoint.dev.sh) runs `bun install` +
-# `prisma generate` on every boot, so the container-side volumes converge
+# `prisma generate` + `prisma migrate deploy` on every app boot, so the volumes converge
 # with bun.lock automatically:
 #   docker compose up -d --build
 services:
@@ -78,6 +77,7 @@ services:
       # Scheduled maintenance tasks write to the database directly.
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
       SKIP_PRISMA_GENERATE: "true"
+      SKIP_MIGRATIONS: "true"
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       SMTP_SECURE: "false"
