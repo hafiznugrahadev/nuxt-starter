@@ -1,8 +1,9 @@
-import type { Prisma } from '../../../generated/prisma/client'
+import { and, asc, desc, like, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
 import { USER_ROLES, parseRoles } from '#shared/utils/roles'
+import { user } from '../../db/schema'
+import { db, escapeLike } from '../../utils/db'
 import { requireAdmin } from '../../utils/guard'
-import { prisma } from '../../utils/prisma'
 import { whereUserHasRole } from '../../utils/user-roles'
 
 const querySchema = z.object({
@@ -58,29 +59,31 @@ export default defineEventHandler(async (event) => {
 
   const query = await getValidatedQuery(event, querySchema.parse)
 
-  const conditions: Prisma.UserWhereInput[] = []
+  const conditions: SQL[] = []
   if (query.search) {
-    conditions.push({ [query.searchField]: { contains: query.search } } as Prisma.UserWhereInput)
+    conditions.push(like(user[query.searchField], `%${escapeLike(query.search)}%`))
   }
   if (query.role) {
     conditions.push(whereUserHasRole(query.role))
   }
-  const where: Prisma.UserWhereInput = conditions.length > 0 ? { AND: conditions } : {}
+  const where = and(...conditions)
+  const order = query.sortDirection === 'asc' ? asc : desc
 
   const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      orderBy: { [query.sortBy]: query.sortDirection },
-      skip: (query.page - 1) * query.pageSize,
-      take: query.pageSize
-    }),
-    prisma.user.count({ where })
+    db
+      .select()
+      .from(user)
+      .where(where)
+      .orderBy(order(user[query.sortBy]))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize),
+    db.$count(user, where)
   ])
 
   return {
     // Role lists stay comma-separated in storage; normalizing here keeps the
     // client rendering simple ("admin,user" and "user,admin" look alike).
-    users: users.map(user => ({ ...user, role: parseRoles(user.role).join(',') })),
+    users: users.map(row => ({ ...row, role: parseRoles(row.role).join(',') })),
     total
   }
 })

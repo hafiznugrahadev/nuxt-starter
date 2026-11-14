@@ -16,7 +16,7 @@ async function main() {
     shuttingDown = true
 
     await Promise.allSettled([stopTasks(), stopEmail()])
-    await prismaDisconnect()
+    await closeDatabase()
     process.exit(0)
   }
 
@@ -24,9 +24,9 @@ async function main() {
   process.once('SIGTERM', () => void shutdown())
 }
 
-async function prismaDisconnect() {
-  const { prisma } = await import('../server/utils/prisma')
-  await prisma.$disconnect()
+async function closeDatabase() {
+  const { closeDb } = await import('../server/utils/db')
+  await closeDb()
 }
 
 main().catch((error) => {

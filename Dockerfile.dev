@@ -1,7 +1,7 @@
 # Development image — runs `nuxt dev` with hot reload.
 # The project source is bind-mounted at runtime (see docker-compose.yml); the
-# baked-in node_modules and generated Prisma client are kept via named/anonymous
-# volumes so they are not shadowed by the host mount.
+# baked-in node_modules are kept via named volumes so they are not shadowed by
+# the host mount.
 FROM oven/bun:1.4
 
 WORKDIR /app
@@ -14,20 +14,16 @@ RUN bun install --frozen-lockfile \
   || (sleep 5 && bun install --frozen-lockfile) \
   || (sleep 10 && bun install --frozen-lockfile)
 
-# Generate the Prisma client (needs the schema only).
-COPY prisma ./prisma
-RUN DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nuxt_starter bunx prisma generate
-
 # Copy the rest (overlaid by the bind mount during `docker compose up`).
 COPY . .
 
-# Sync deps + Prisma client into the node_modules volume on every boot, so a
-# dependency change only needs `docker compose up -d` (no volume rm).
+# Sync deps into the node_modules volume and apply migrations on every boot,
+# so a dependency change only needs `docker compose up -d` (no volume rm).
 # Run via `sh` — the bind mount carries the host file's permission bits, which
 # may not include +x (fresh clones, some filesystems).
 COPY docker-entrypoint.dev.sh ./
 ENTRYPOINT ["sh", "./docker-entrypoint.dev.sh"]
 
-EXPOSE 3000 24678 5555
+EXPOSE 3000 24678
 
 CMD ["bun", "run", "dev", "--host"]

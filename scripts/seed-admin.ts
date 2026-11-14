@@ -9,14 +9,16 @@
 // Seeding only touches the database; silence Better Auth's base-URL warning.
 process.env.BETTER_AUTH_URL ||= 'http://localhost:3000'
 const { auth } = await import('../server/utils/auth')
-const { prisma } = await import('../server/utils/prisma')
+const { eq } = await import('drizzle-orm')
+const { user } = await import('../server/db/schema')
+const { closeDb, db } = await import('../server/utils/db')
 
 async function main() {
   const name = process.env.ADMIN_NAME || 'Administrator'
   const email = process.env.ADMIN_EMAIL || 'admin@example.com'
   const password = process.env.ADMIN_PASSWORD || 'admin12345'
 
-  await prisma.user.deleteMany({ where: { email } })
+  await db.delete(user).where(eq(user.email, email))
 
   await auth.api.createUser({
     body: { name, email, password, role: 'super-admin' }
@@ -34,5 +36,5 @@ main()
     process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect()
+    await closeDb()
   })

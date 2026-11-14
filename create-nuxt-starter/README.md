@@ -2,7 +2,7 @@
 
 npm installer that scaffolds the
 [nuxt-starter](https://github.com/hafiznugrahadev/nuxt-starter) template
-(Nuxt 4 + Better Auth with multi-role admin + Prisma + Redis + BullMQ).
+(Nuxt 4 + Better Auth with multi-role admin + Drizzle ORM + Redis + BullMQ).
 
 ## Usage
 

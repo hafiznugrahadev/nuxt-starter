@@ -2,7 +2,7 @@ import { Worker } from 'bullmq'
 import { queueRedisConnectionOptions } from '../server/utils/queue-redis'
 import { getScheduledTask, recordTaskRun, SCHEDULED_TASKS } from '../server/utils/scheduled-tasks'
 import { scheduleRecurringTasks, TASK_QUEUE_NAME } from '../server/utils/task-queue'
-import { prisma } from '../server/utils/prisma'
+import { db } from '../server/utils/db'
 
 // Starts the scheduled-task worker: registers the recurring BullMQ jobs
 // (this process is the single scheduler registrar) and processes their
@@ -18,7 +18,7 @@ export async function startTaskWorker() {
       return
     }
 
-    const result = await task.run(prisma)
+    const result = await task.run(db)
     return result
   }, {
     connection: queueRedisConnectionOptions(null),

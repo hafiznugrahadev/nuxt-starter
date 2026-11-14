@@ -1,4 +1,6 @@
-import { prisma } from '../../utils/prisma'
+import { count, desc, eq, gt, gte, sql } from 'drizzle-orm'
+import { session, user } from '../../db/schema'
+import { db } from '../../utils/db'
 import { requireAdmin } from '../../utils/guard'
 import { whereUserHasRole } from '../../utils/user-roles'
 
@@ -26,6 +28,9 @@ export default defineEventHandler(async (event) => {
 
   const now = new Date()
 
+  // Mapping through the column keeps the UTC handling of `timestamp(3)`.
+  const month = sql<Date>`date_trunc('month', ${user.createdAt})`.mapWith(user.createdAt)
+
   const [
     totalUsers,
     adminUsers,
@@ -34,31 +39,31 @@ export default defineEventHandler(async (event) => {
     recentUsers,
     signupsByMonth
   ] = await Promise.all([
-    prisma.user.count(),
+    db.$count(user),
     // Comma-separated role lists ("user,admin") must count as admins too.
-    prisma.user.count({ where: whereUserHasRole('admin') }),
-    prisma.user.count({ where: { banned: true } }),
-    prisma.session.count({ where: { expiresAt: { gt: now } } }),
-    prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        banned: true,
-        createdAt: true
-      }
-    }),
-    // Real signups per calendar month (last 6 months including empty ones).
-    prisma.$queryRaw<Array<{ month: Date, count: bigint }>>`
-      SELECT date_trunc('month', "createdAt") AS month, COUNT(*)::bigint AS count
-      FROM "user"
-      WHERE "createdAt" >= date_trunc('month', now()) - interval '5 months'
-      GROUP BY 1
-      ORDER BY 1
-    `
+    db.$count(user, whereUserHasRole('admin')),
+    db.$count(user, eq(user.banned, true)),
+    db.$count(session, gt(session.expiresAt, now)),
+    db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        banned: user.banned,
+        createdAt: user.createdAt
+      })
+      .from(user)
+      .orderBy(desc(user.createdAt))
+      .limit(5),
+    // Real signups per calendar month over the last 6 months. Months without
+    // signups produce no row.
+    db
+      .select({ month, count: count() })
+      .from(user)
+      .where(gte(user.createdAt, sql`date_trunc('month', now()) - interval '5 months'`))
+      .groupBy(month)
+      .orderBy(month)
   ])
 
   return {
@@ -69,7 +74,7 @@ export default defineEventHandler(async (event) => {
     recentUsers,
     signupsByMonth: signupsByMonth.map(row => ({
       month: row.month.toISOString(),
-      count: Number(row.count)
+      count: row.count
     }))
   }
 })

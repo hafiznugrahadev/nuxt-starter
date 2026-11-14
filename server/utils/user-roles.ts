@@ -1,18 +1,18 @@
-import type { Prisma } from '../../generated/prisma/client'
+import { eq, like, or, type SQL } from 'drizzle-orm'
+import { user } from '../db/schema'
+import { escapeLike } from './db'
 
 /**
- * Prisma `where` clause matching users whose comma-separated `role` column
- * includes `role` as a whole entry — "admin,editor" matches "admin" but not
- * "adm". Postgres `contains` alone would do substring matching, hence the
- * four anchored variants.
+ * Matches users whose comma-separated `role` column includes `role` as a
+ * whole entry: "admin,editor" matches "admin" but not "adm". A plain
+ * substring match would not, hence the four anchored variants.
  */
-export function whereUserHasRole(role: string): Prisma.UserWhereInput {
-  return {
-    OR: [
-      { role },
-      { role: { startsWith: `${role},` } },
-      { role: { contains: `,${role},` } },
-      { role: { endsWith: `,${role}` } }
-    ]
-  }
+export function whereUserHasRole(role: string): SQL {
+  const pattern = escapeLike(role)
+  return or(
+    eq(user.role, role),
+    like(user.role, `${pattern},%`),
+    like(user.role, `%,${pattern},%`),
+    like(user.role, `%,${pattern}`)
+  )!
 }

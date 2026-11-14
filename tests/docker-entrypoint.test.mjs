@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
 const entrypoint = fileURLToPath(new URL('../docker-entrypoint.dev.sh', import.meta.url))
-const migration = 'bun node_modules/prisma/build/index.js migrate deploy'
+const migration = 'bun scripts/migrate.ts'
 let directory
 let log
 
@@ -16,11 +16,11 @@ beforeEach(() => {
   writeFileSync(log, '')
   const stub = `#!/bin/sh
 printf '%s %s\\n' "\${0##*/}" "$*" >> "$COMMAND_LOG"
-if [ "$1" = "node_modules/prisma/build/index.js" ]; then
+if [ "$1" = "scripts/migrate.ts" ]; then
   exit "\${MIGRATION_EXIT_CODE:-0}"
 fi
 `
-  for (const command of ['bun', 'bunx', 'app']) {
+  for (const command of ['bun', 'app']) {
     writeFileSync(join(directory, command), stub, { mode: 0o755 })
   }
 })
@@ -52,7 +52,6 @@ test('applies pending migrations before starting the app on every boot without s
   }
   expect(commands()).toEqual(Array(2).fill([
     'bun install --frozen-lockfile',
-    'bunx prisma generate',
     migration,
     'app --host'
   ]).flat())
@@ -62,22 +61,16 @@ test('does not start the app when applying migrations fails', () => {
   expect(start({ MIGRATION_EXIT_CODE: '23' }).status).toBe(23)
   expect(commands()).toEqual([
     'bun install --frozen-lockfile',
-    'bunx prisma generate',
     migration
   ])
 })
 
-test('lets the worker explicitly skip migrations and Prisma generation', () => {
-  expect(start({ SKIP_MIGRATIONS: 'true', SKIP_PRISMA_GENERATE: 'true' }).status).toBe(0)
+test('lets the worker explicitly skip migrations', () => {
+  expect(start({ SKIP_MIGRATIONS: 'true' }).status).toBe(0)
   expect(commands()).toEqual(['bun install --frozen-lockfile', 'app --host'])
-})
-
-test('still migrates when only Prisma generation is skipped', () => {
-  expect(start({ SKIP_PRISMA_GENERATE: 'true' }).status).toBe(0)
-  expect(commands()).toEqual(['bun install --frozen-lockfile', migration, 'app --host'])
 })
 
 test('skips migrations when no database is configured', () => {
   expect(start({ DATABASE_URL: '' }).status).toBe(0)
-  expect(commands()).toEqual(['bun install --frozen-lockfile', 'bunx prisma generate', 'app --host'])
+  expect(commands()).toEqual(['bun install --frozen-lockfile', 'app --host'])
 })

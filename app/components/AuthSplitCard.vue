@@ -7,7 +7,7 @@ import { CalendarClockIcon, DatabaseIcon, ShieldCheckIcon } from '@lucide/vue'
 // tablets the branding pane is hidden and the card collapses to the form.
 const features = [
   { icon: ShieldCheckIcon, text: 'Better Auth with multi-role admin and super-admin tooling' },
-  { icon: DatabaseIcon, text: 'Prisma + PostgreSQL with migrations and seeds' },
+  { icon: DatabaseIcon, text: 'Drizzle ORM + PostgreSQL with SQL migrations and seeds' },
   { icon: CalendarClockIcon, text: 'BullMQ email queue and scheduled maintenance tasks' }
 ]
 </script>
@@ -27,7 +27,7 @@ const features = [
           </h2>
           <p class="text-primary-foreground/80 text-sm leading-relaxed">
             Email &amp; password auth, a multi-role admin area, scheduled tasks
-            and interactive API docs — wired up and ready to go.
+            and interactive API docs, wired up and ready to go.
           </p>
           <ul class="space-y-3 pt-2">
             <li

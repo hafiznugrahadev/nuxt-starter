@@ -6,9 +6,8 @@
 #     docker compose -f docker-compose.prod.yml up -d --build
 #
 # Migrations run automatically on app start via the image entrypoint
-# (`prisma migrate deploy`). Seed the admin once the app is running:
-#   docker compose -f docker-compose.prod.yml exec app \
-#     bun node_modules/prisma/build/index.js db seed
+# (`bun scripts/migrate.ts`). Seed the admin once the app is running:
+#   docker compose -f docker-compose.prod.yml exec app bun run seed:admin
 services:
   app:
     build:

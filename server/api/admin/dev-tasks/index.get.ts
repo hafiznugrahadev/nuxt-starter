@@ -1,4 +1,4 @@
-import type { Prisma } from '../../../../generated/prisma/client'
+import { and, asc, desc, eq, like, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
 import {
   DEV_TASK_PRIORITIES,
@@ -6,8 +6,9 @@ import {
   devTaskPrioritySchema,
   devTaskStatusSchema
 } from '#shared/utils/dev-tasks'
+import { devTask } from '../../../db/schema'
+import { db, escapeLike } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/guard'
-import { prisma } from '../../../utils/prisma'
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -59,26 +60,28 @@ export default defineEventHandler(async (event) => {
 
   const query = await getValidatedQuery(event, querySchema.parse)
 
-  const conditions: Prisma.DevTaskWhereInput[] = []
+  const conditions: SQL[] = []
   if (query.search) {
-    conditions.push({ title: { contains: query.search } })
+    conditions.push(like(devTask.title, `%${escapeLike(query.search)}%`))
   }
   if (query.status) {
-    conditions.push({ status: query.status })
+    conditions.push(eq(devTask.status, query.status))
   }
   if (query.priority) {
-    conditions.push({ priority: query.priority })
+    conditions.push(eq(devTask.priority, query.priority))
   }
-  const where: Prisma.DevTaskWhereInput = conditions.length > 0 ? { AND: conditions } : {}
+  const where = and(...conditions)
+  const order = query.sortDirection === 'asc' ? asc : desc
 
   const [tasks, total] = await Promise.all([
-    prisma.devTask.findMany({
-      where,
-      orderBy: { [query.sortBy]: query.sortDirection },
-      skip: (query.page - 1) * query.pageSize,
-      take: query.pageSize
-    }),
-    prisma.devTask.count({ where })
+    db
+      .select()
+      .from(devTask)
+      .where(where)
+      .orderBy(order(devTask[query.sortBy]))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize),
+    db.$count(devTask, where)
   ])
 
   return { tasks, total }

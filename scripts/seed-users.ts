@@ -8,7 +8,9 @@
 // Seeding only touches the database; silence Better Auth's base-URL warning.
 process.env.BETTER_AUTH_URL ||= 'http://localhost:3000'
 const { auth } = await import('../server/utils/auth')
-const { prisma } = await import('../server/utils/prisma')
+const { user } = await import('../server/db/schema')
+const { closeDb, db } = await import('../server/utils/db')
+
 const firstNames = [
   'Alice', 'Bob', 'Carol', 'David', 'Emma', 'Frank', 'Grace', 'Henry',
   'Ivy', 'Jack', 'Kara', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter',
@@ -24,7 +26,7 @@ async function main() {
   const count = Number(process.env.SEED_COUNT || 50)
 
   const existing = new Set(
-    (await prisma.user.findMany({ select: { email: true } })).map(user => user.email)
+    (await db.select({ email: user.email }).from(user)).map(row => row.email)
   )
 
   let created = 0
@@ -55,5 +57,5 @@ main()
     process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect()
+    await closeDb()
   })

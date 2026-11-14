@@ -14,7 +14,7 @@
 #   3. Add a Domain pointing to this service on container port 3000.
 #
 # Database migrations run automatically on container start via the image
-# entrypoint (`prisma migrate deploy`). No ports are published. Dokploy's
+# entrypoint (`bun scripts/migrate.ts`). No ports are published. Dokploy's
 # Traefik reaches the app over the shared `dokploy-network`.
 services:
   app:

@@ -1,10 +1,11 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
-import { prismaAdapter } from 'better-auth/adapters/prisma'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin, openAPI } from 'better-auth/plugins'
 import { adminOptions } from '../../shared/utils/auth-permissions'
+import * as schema from '../db/schema'
+import { db } from './db'
 import { enqueuePasswordResetEmail } from './email-queue'
-import { prisma } from './prisma'
 import { getAppSettings } from './settings'
 
 // This module is imported by Nitro handlers, the seed scripts and the
@@ -12,7 +13,7 @@ import { getAppSettings } from './settings'
 // only, and let Better Auth read BETTER_AUTH_SECRET / BETTER_AUTH_URL from the
 // environment itself.
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, { provider: 'postgresql' }),
+  database: drizzleAdapter(db, { provider: 'pg', schema }),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,

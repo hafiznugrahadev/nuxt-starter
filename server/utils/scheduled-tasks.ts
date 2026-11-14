@@ -1,5 +1,7 @@
-import type { PrismaClient } from '../../generated/prisma/client'
-import { prisma } from './prisma'
+import { like, lt } from 'drizzle-orm'
+import { session, setting, verification } from '../db/schema'
+import { db, escapeLike, type Database } from './db'
+import { upsertSetting } from './settings'
 
 // Registry of recurring maintenance tasks executed by the task scheduler
 // (worker process). Adding a task here is enough: the worker registers the
@@ -10,7 +12,7 @@ export interface ScheduledTask {
   description: string
   /** 5-field cron pattern, evaluated in UTC. */
   pattern: string
-  run: (db: PrismaClient) => Promise<{ message: string }>
+  run: (database: Database) => Promise<{ message: string }>
 }
 
 export const SCHEDULED_TASKS: ScheduledTask[] = [
@@ -19,9 +21,9 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     title: 'Prune expired sessions',
     description: 'Deletes session rows whose expiry has passed.',
     pattern: '15 * * * *',
-    async run(db) {
-      const removed = await db.session.deleteMany({ where: { expiresAt: { lt: new Date() } } })
-      return { message: `Removed ${removed.count} expired session(s).` }
+    async run(database) {
+      const removed = await database.delete(session).where(lt(session.expiresAt, new Date()))
+      return { message: `Removed ${removed.rowCount ?? 0} expired session(s).` }
     }
   },
   {
@@ -29,9 +31,9 @@ export const SCHEDULED_TASKS: ScheduledTask[] = [
     title: 'Prune expired verification tokens',
     description: 'Deletes Better Auth verification rows (password reset, email verification) past their expiry.',
     pattern: '30 3 * * *',
-    async run(db) {
-      const removed = await db.verification.deleteMany({ where: { expiresAt: { lt: new Date() } } })
-      return { message: `Removed ${removed.count} expired verification(s).` }
+    async run(database) {
+      const removed = await database.delete(verification).where(lt(verification.expiresAt, new Date()))
+      return { message: `Removed ${removed.rowCount ?? 0} expired verification(s).` }
     }
   }
 ]
@@ -54,17 +56,14 @@ function lastRunKey(id: string) {
 
 export async function recordTaskRun(id: string, status: TaskLastRun['status'], message: string) {
   const value = JSON.stringify({ status, message, finishedAt: new Date().toISOString() })
-  await prisma.setting.upsert({
-    where: { key: lastRunKey(id) },
-    create: { key: lastRunKey(id), value },
-    update: { value }
-  })
+  await upsertSetting(lastRunKey(id), value)
 }
 
 export async function getTaskLastRuns(): Promise<Record<string, TaskLastRun>> {
-  const rows = await prisma.setting.findMany({
-    where: { key: { startsWith: 'task:lastRun:' } }
-  })
+  const rows = await db
+    .select()
+    .from(setting)
+    .where(like(setting.key, `${escapeLike('task:lastRun:')}%`))
 
   const runs: Record<string, TaskLastRun> = {}
   for (const row of rows) {

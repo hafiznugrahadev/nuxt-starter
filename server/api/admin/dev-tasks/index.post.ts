@@ -7,8 +7,9 @@ import {
   devTaskPrioritySchema,
   devTaskStatusSchema
 } from '#shared/utils/dev-tasks'
+import { devTask } from '../../../db/schema'
+import { db } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/guard'
-import { prisma } from '../../../utils/prisma'
 
 const bodySchema = devTaskBaseSchema.extend({
   description: devTaskDescriptionSchema.optional(),
@@ -53,11 +54,10 @@ export default defineEventHandler(async (event) => {
   await requireSuperAdmin(event)
 
   const body = await readValidatedBody(event, bodySchema.parse)
-  const { dueDate, ...rest } = body
-
-  const task = await prisma.devTask.create({
-    data: { ...rest, ...(dueDate ? { dueDate } : {}) }
-  })
+  const [task] = await db
+    .insert(devTask)
+    .values({ ...body, dueDate: body.dueDate ?? null })
+    .returning()
 
   event.node.res.statusCode = 201
   return { task }

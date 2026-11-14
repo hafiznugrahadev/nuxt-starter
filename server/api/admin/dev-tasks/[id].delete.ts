@@ -1,6 +1,8 @@
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { devTask } from '../../../db/schema'
+import { db } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/guard'
-import { prisma } from '../../../utils/prisma'
 
 const paramsSchema = z.object({ id: z.string() })
 
@@ -25,9 +27,12 @@ export default defineEventHandler(async (event) => {
 
   const { id } = await getValidatedRouterParams(event, paramsSchema.parse)
 
-  try {
-    await prisma.devTask.delete({ where: { id } })
-  } catch {
+  const deleted = await db
+    .delete(devTask)
+    .where(eq(devTask.id, id))
+    .returning({ id: devTask.id })
+
+  if (deleted.length === 0) {
     throw createError({ statusCode: 404, statusMessage: 'Task not found' })
   }
 

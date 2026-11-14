@@ -56,7 +56,7 @@ virtualized from 100 options by default (`virtualize-threshold`).
 | Framework       | [Nuxt 4](https://nuxt.com)                                                 |
 | UI              | [shadcn-vue](https://www.shadcn-vue.com) (reka-ui) + [Tailwind CSS 4](https://tailwindcss.com) |
 | Auth            | [Better Auth 1.7](https://www.better-auth.com) with the `admin` plugin     |
-| Database / ORM  | [PostgreSQL](https://www.postgresql.org) + [Prisma 7](https://www.prisma.io) |
+| Database / ORM  | [PostgreSQL](https://www.postgresql.org) + [Drizzle ORM](https://orm.drizzle.team) (node-postgres) |
 | API docs        | Nitro OpenAPI + [Scalar](https://github.com/scalar/scalar)                |
 | Validation      | [Zod 4](https://zod.dev)                                                   |
 | Cache / jobs    | Redis for Nitro cache, BullMQ for email delivery                         |
@@ -175,10 +175,25 @@ openssl rand -base64 32   # handy for the auth secret
 ### 4. Create the database schema
 
 ```bash
-bun run db:migrate     # creates tables via Prisma migrations
+bun run db:migrate     # applies the SQL migrations in server/db/migrations
 # or, without migration history:
 bun run db:push
 ```
+
+#### Changing the schema
+
+The schema lives in `server/db/schema.ts`. After editing it, generate a migration, review the SQL, apply it, and commit both:
+
+```bash
+bun run db:generate    # writes server/db/migrations/NNNN_*.sql
+bun run db:migrate
+```
+
+CI runs `db:generate` and fails if it writes a file, so a schema change without its migration does not pass.
+
+#### Upgrading a database created by the Prisma version
+
+Earlier versions of this starter used Prisma. The first Drizzle migration (`0000_baseline.sql`) uses only `IF NOT EXISTS` statements, so on a database that already holds the Prisma tables it records the baseline and leaves the data alone. Deploy as usual; there is no manual step. The old `_prisma_migrations` table is no longer read and can be dropped.
 
 ### 5. Seed the admin user
 
@@ -206,7 +221,7 @@ Visit `http://localhost:3000`, click **Sign in**, log in with the admin credenti
 ## How auth is wired
 
 ```
-server/utils/auth.ts             betterAuth() + prismaAdapter + admin() + openAPI()
+server/utils/auth.ts             betterAuth() + drizzleAdapter + admin() + openAPI()
 server/api/auth/[...all].ts      catch-all handler → all auth lives under /api/auth/*
 app/lib/auth-client.ts           createAuthClient (better-auth/vue) + adminClient
 app/composables/useAuthSession.ts one shared SSR-safe session request
@@ -232,10 +247,12 @@ server/plugins/redis-cache.ts    runtime Redis mount for Nitro cache storage
 ## Project layout
 
 ```
-prisma/schema.prisma                 # User / Session / Account / Verification (Better Auth)
-prisma.config.ts                     # Prisma 7 schema, migrations, and seed config
+server/db/schema.ts                  # Drizzle tables (Better Auth, setting, dev_task)
+server/db/migrations/                # SQL migrations + drizzle-kit snapshots
+drizzle.config.ts                    # drizzle-kit config (generate / push / studio)
+scripts/migrate.ts                   # applies migrations (bun run db:migrate)
 server/utils/auth.ts                 # Better Auth instance
-server/utils/prisma.ts               # PrismaClient singleton
+server/utils/db.ts                   # Drizzle client on a shared pg Pool
 server/utils/guard.ts                # requireSession() / requireAdmin() for custom endpoints
 server/api/auth/[...all].ts          # Better Auth catch-all handler
 server/api/openapi.json.get.ts       # Better Auth OpenAPI schema
@@ -334,10 +351,10 @@ pgweb connects to the development database automatically after Postgres is healt
 docker compose up -d pgweb
 ```
 
-Prisma Studio binds to `127.0.0.1` only (Prisma 7), so it is not run as a compose service. If you prefer Studio, run it from the host:
+If you prefer Drizzle Studio, run it from the host:
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter?schema=public \
+DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter \
   bun run db:studio
 ```
 
@@ -345,7 +362,7 @@ DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432
 docker compose up --build
 ```
 
-The app applies committed migrations with `prisma migrate deploy` before starting on every boot or redeploy. If a migration fails, the app does not start. The worker skips migrations; the app owns this step.
+The app applies committed migrations with `bun scripts/migrate.ts` before starting on every boot or redeploy. If a migration fails, the app does not start. The worker skips migrations; the app owns this step.
 
 On first run, seed the admin inside the app container after startup completes:
 
@@ -356,9 +373,9 @@ docker compose exec app bun run seed:users   # optional demo data
 
 The stack sets `BETTER_AUTH_URL=https://app.nuxt-starter.orb.local` by default. Better Auth checks the browser's `Origin` header against it and derives cookie attributes from it. Override it via `BETTER_AUTH_URL` in `.env` if you browse from a different host.
 
-When changing the Prisma schema, create a new migration with `docker compose exec app bun run db:migrate` and commit it. Startup applies existing migrations; it does not generate them or seed accounts.
+When changing `server/db/schema.ts`, create a new migration with `docker compose exec app bun run db:generate` and commit it. Startup applies existing migrations; it does not generate them or seed accounts.
 
-Hot reload works through the bind-mounted source; the container keeps its own `node_modules` in a named volume (host deps are macOS binaries, the container needs Linux ones). The entrypoint (`docker-entrypoint.dev.sh`) runs `bun install` + `prisma generate` + `prisma migrate deploy` on **every app boot**, so after changing dependencies just:
+Hot reload works through the bind-mounted source; the container keeps its own `node_modules` in a named volume (host deps are macOS binaries, the container needs Linux ones). The entrypoint (`docker-entrypoint.dev.sh`) runs `bun install` + `bun scripts/migrate.ts` on **every app boot**, so after changing dependencies just:
 
 ```bash
 docker compose up -d --build
@@ -377,9 +394,9 @@ docker compose down -v             # stop and wipe the database
 
 ## Deployment
 
-The multi-stage `Dockerfile` keeps the runtime image lean. A build stage compiles Nitro, and a separate runtime-dependency stage installs Prisma 7, Better Auth, BullMQ, Nodemailer, and the PostgreSQL adapter. Nuxt and build-only packages stay out of the runner image.
+The multi-stage `Dockerfile` keeps the runtime image lean. A build stage compiles Nitro, and a separate runtime-dependency stage installs Drizzle ORM, `pg`, Better Auth, BullMQ, and Nodemailer for the migration runner, seed scripts, and worker. Nuxt and build-only packages stay out of the runner image.
 
-The image runs **`prisma migrate deploy` automatically on start** (via `docker-entrypoint.sh`), so a freshly deployed container migrates its database before serving.
+The image runs **`bun scripts/migrate.ts` automatically on start** (via `docker-entrypoint.sh`), so a freshly deployed container migrates its database before serving.
 
 ### Dokploy (app only, external database)
 
@@ -392,7 +409,7 @@ The image runs **`prisma migrate deploy` automatically on start** (via `docker-e
 Migrations run automatically on deploy. To seed the admin once, run in the app container (Dokploy → Terminal):
 
 ```bash
-bun node_modules/prisma/build/index.js db seed
+bun run seed:admin
 ```
 
 ### Docker (production, with bundled Postgres)
@@ -409,13 +426,12 @@ SMTP_FROM='Nuxt Starter <no-reply@example.com>' \
 Seed the admin once the app is up:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec app \
-  bun node_modules/prisma/build/index.js db seed
+docker compose -f docker-compose.prod.yml exec app bun run seed:admin
 ```
 
 ### Vercel
 
-Import the repository into Vercel and keep its detected Nuxt framework preset. `vercel.json` generates the Prisma client, applies committed migrations with `prisma migrate deploy`, and builds Nuxt on each deployment. Vercel's Nuxt build does not run the Docker entrypoint. A failed migration stops the build; accounts are not seeded automatically.
+Import the repository into Vercel and keep its detected Nuxt framework preset. `vercel.json` applies committed migrations with `bun run db:migrate` and builds Nuxt on each deployment. Vercel's Nuxt build does not run the Docker entrypoint. A failed migration stops the build; accounts are not seeded automatically.
 
 Set `DATABASE_URL` to a PostgreSQL service reachable from Vercel, plus `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` (the deployed application's origin). The database must be reachable during both build and runtime. Use a separate database for preview deployments so preview builds cannot migrate production data.
 
@@ -429,7 +445,7 @@ Set `QUEUE_REDIS_URL` to a reachable Redis service for password-reset email and 
 
 ```bash
 bun run build
-bunx prisma migrate deploy        # apply migrations to DATABASE_URL
+bun run db:migrate                # apply migrations to DATABASE_URL
 node .output/server/index.mjs     # start the server (defaults to port 3000)
 ```
 
@@ -459,10 +475,10 @@ See the [Nuxt deployment docs](https://nuxt.com/docs/getting-started/deployment)
 | `bun run build`      | Production build                         |
 | `bun run typecheck`  | Type-check the project                   |
 | `bun run lint`       | Lint with ESLint                         |
-| `bun run db:migrate` | Run Prisma migrations (dev)              |
+| `bun run db:generate`| Generate a migration from the schema     |
+| `bun run db:migrate` | Apply pending migrations                 |
 | `bun run db:push`    | Push schema without migrations           |
-| `bun run db:studio`  | Open Prisma Studio                       |
-| `bun run db:reset`   | Reset DB and regenerate Prisma Client   |
+| `bun run db:studio`  | Open Drizzle Studio                      |
 | `bun run seed:admin` | Seed/reset the admin user                |
 | `bun run seed:users` | Seed demo users                          |
 | `bun run worker`     | Start the BullMQ email worker            |

@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import {
   DEV_TASK_PRIORITIES,
@@ -5,8 +6,9 @@ import {
   devTaskBaseSchema,
   devTaskDescriptionSchema
 } from '#shared/utils/dev-tasks'
+import { devTask } from '../../../db/schema'
+import { db } from '../../../utils/db'
 import { requireSuperAdmin } from '../../../utils/guard'
-import { prisma } from '../../../utils/prisma'
 
 const paramsSchema = z.object({ id: z.string() })
 
@@ -58,17 +60,21 @@ export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, paramsSchema.parse)
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  const data: Record<string, unknown> = {}
+  const data: Partial<typeof devTask.$inferInsert> = {}
   if (body.title !== undefined) data.title = body.title
   if (body.description !== undefined) data.description = body.description
   if (body.status !== undefined) data.status = body.status
   if (body.priority !== undefined) data.priority = body.priority
   if (body.dueDate !== undefined) data.dueDate = body.dueDate
 
-  try {
-    const task = await prisma.devTask.update({ where: { id }, data })
-    return { task }
-  } catch {
+  const [task] = await db
+    .update(devTask)
+    .set(data)
+    .where(eq(devTask.id, id))
+    .returning()
+
+  if (!task) {
     throw createError({ statusCode: 404, statusMessage: 'Task not found' })
   }
+  return { task }
 })

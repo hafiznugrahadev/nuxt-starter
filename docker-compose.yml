@@ -12,16 +12,15 @@
 #   redis-queue: redis-queue.nuxt-starter.orb.local:6379   (BullMQ jobs)
 #   mailpit:  http://mailpit.nuxt-starter.orb.local:8025   (mail inbox)
 #
-# Prisma Studio (Prisma 7) only binds 127.0.0.1, so it cannot be exposed as a
-# container service. Use pgweb above, or run Studio from the host:
-#   DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter?schema=public bun run db:studio
+# Use pgweb above to browse the database, or run Drizzle Studio from the host:
+#   DATABASE_URL=postgresql://postgres:postgres@postgres.nuxt-starter.orb.local:5432/nuxt_starter bun run db:studio
 #
 # The app applies committed migrations on every boot. Seed the admin once:
 #   docker compose exec app bun run seed:admin
 #
 # After changing dependencies (package.json / bun.lock), just restart the
 # stack: the entrypoint (docker-entrypoint.dev.sh) runs `bun install` +
-# `prisma generate` + `prisma migrate deploy` on every app boot, so the volumes converge
+# `bun scripts/migrate.ts` on every app boot, so the volumes converge
 # with bun.lock automatically:
 #   docker compose up -d --build
 services:
@@ -55,7 +54,7 @@ services:
     # container's orb.local domain (https://app.nuxt-starter.orb.local).
     volumes:
       - .:/app # bind-mount source for hot reload
-      - app_node_modules:/app/node_modules # keep container deps + Prisma client
+      - app_node_modules:/app/node_modules # keep container-side (Linux) deps
       - app_nuxt:/app/.nuxt # keep the build cache container-side
     depends_on:
       postgres:
@@ -76,7 +75,6 @@ services:
       QUEUE_REDIS_URL: redis://redis-queue:6379
       # Scheduled maintenance tasks write to the database directly.
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nuxt_starter?schema=public
-      SKIP_PRISMA_GENERATE: "true"
       SKIP_MIGRATIONS: "true"
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
