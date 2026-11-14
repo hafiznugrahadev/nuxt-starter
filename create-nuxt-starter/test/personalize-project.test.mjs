@@ -41,7 +41,7 @@ async function makeProjectFixture(root, directory) {
   ].join('\n'))
   await writeFile(path.join(target, '.env.example'), 'DATABASE_URL="postgresql://localhost:5432/nuxt_starter?schema=public"\n')
   await writeFile(path.join(target, '.github/workflows/ci.yml'), 'DATABASE_URL=postgresql://localhost:5432/nuxt_starter\n')
-  await writeFile(path.join(target, 'e2e/verify-dev-tasks.mjs'), "const BASE = 'https://app.nuxt-starter.orb.local'\n")
+  await writeFile(path.join(target, 'e2e/verify-dev-tasks.mjs'), 'const BASE = \'https://app.nuxt-starter.orb.local\'\n')
   return target
 }
 

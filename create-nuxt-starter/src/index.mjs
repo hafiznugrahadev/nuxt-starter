@@ -83,7 +83,7 @@ async function personalizeProject(targetDir, projectName) {
     const filePath = path.join(targetDir, file)
     let compose = await readFile(filePath, 'utf8')
     compose = compose
-      .replace(/^    container_name: .*\n/gm, '')
+      .replace(/^ {4}container_name: .*\n/gm, '')
       .replaceAll('nuxt_starter', databaseName)
       .replaceAll('nuxt-starter.orb.local', `${projectName}.orb.local`)
     compose = `name: ${file === 'docker-compose.prod.yml' ? `${projectName}-prod` : projectName}\n${compose}`
