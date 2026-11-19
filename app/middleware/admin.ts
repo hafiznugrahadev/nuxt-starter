@@ -1,4 +1,5 @@
 import { hasRole } from '#shared/utils/roles'
+import { useAuthSession } from '~/composables/useAuthSession'
 
 // Route middleware: require a signed-in admin or super-admin.
 export default defineNuxtRouteMiddleware(async (to) => {

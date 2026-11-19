@@ -22,6 +22,9 @@ import {
 } from '#shared/utils/dev-tasks'
 import type { DevTaskPriority, DevTaskStatus } from '#shared/utils/dev-tasks'
 import type { BadgeVariants } from '@/components/ui/badge'
+import { type DevTask, useDevTasks } from '~/composables/useDevTasks'
+import ServerDataTable from '~/components/ServerDataTable.vue'
+import AdminPageHeader from '~/components/admin/AdminPageHeader.vue'
 
 // Reference CRUD implementation: paged table (ServerDataTable) + filter
 // modal + create/edit/delete dialogs on the /api/admin/dev-tasks endpoints.

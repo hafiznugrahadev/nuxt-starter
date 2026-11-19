@@ -19,6 +19,10 @@ import { z } from 'zod'
 import { USER_ROLES, parseRoles, roleLabel } from '#shared/utils/roles'
 import type { AuthUser } from '~/lib/auth-client'
 import { authClient } from '~/lib/auth-client'
+import { useAuthSession } from '~/composables/useAuthSession'
+import { useAdminUsers } from '~/composables/useAdminUsers'
+import ServerDataTable from '~/components/ServerDataTable.vue'
+import AdminPageHeader from '~/components/admin/AdminPageHeader.vue'
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'User Management · Admin' })

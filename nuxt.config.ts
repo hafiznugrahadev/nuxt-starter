@@ -10,6 +10,18 @@ export default defineNuxtConfig({
     '@scalar/nuxt'
   ],
 
+  // Own code is imported explicitly (see CLAUDE.md "Imports"): composables
+  // from `~/composables/<file>`, custom components from their `.vue` path.
+  // Vue/Nuxt APIs and shadcn `ui/*` components (registered by shadcn-nuxt)
+  // stay auto-imported. server/utils is unaffected (Nitro scans it).
+  components: {
+    dirs: []
+  },
+
+  imports: {
+    scan: false
+  },
+
   devtools: {
     enabled: true
   },

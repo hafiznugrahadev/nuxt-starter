@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CalendarClockIcon, DatabaseIcon, ShieldCheckIcon } from '@lucide/vue'
+import AppLogo from '~/components/AppLogo.vue'
 
 // Shared two-pane shell for the auth pages (sign-in, register, password
 // recovery): a primary-colored branding pane on lg+ screens and the page's

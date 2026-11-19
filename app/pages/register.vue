@@ -3,6 +3,7 @@ import { Loader2Icon } from '@lucide/vue'
 import { z } from 'zod'
 import { toast } from 'vue-sonner'
 import { authClient } from '~/lib/auth-client'
+import AuthSplitCard from '~/components/AuthSplitCard.vue'
 
 definePageMeta({ middleware: ['guest', 'registration'] })
 useHead({ title: 'Create account' })

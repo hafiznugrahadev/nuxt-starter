@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CalendarClockIcon, Loader2Icon, PlayIcon, RefreshCwIcon } from '@lucide/vue'
 import { toast } from 'vue-sonner'
+import AdminPageHeader from '~/components/admin/AdminPageHeader.vue'
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Settings · Admin' })

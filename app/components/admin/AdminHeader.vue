@@ -2,6 +2,9 @@
 import { HomeIcon, LogOutIcon, UserRoundIcon } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { authClient } from '~/lib/auth-client'
+import { useAuthSession } from '~/composables/useAuthSession'
+import AppLogo from '~/components/AppLogo.vue'
+import ColorModeButton from '~/components/ColorModeButton.vue'
 
 // Header follows the template's VerticalHeader: sidebar trigger + logo on
 // mobile, theme toggle and profile dropdown on the right.

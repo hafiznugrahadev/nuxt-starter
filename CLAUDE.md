@@ -1,5 +1,41 @@
 # Project rules
 
+## Imports
+
+`nuxt.config.ts` sets `imports.scan: false` and `components.dirs: []`, so
+project code is not auto-imported in `app/`. Every symbol in a file should be
+traceable to an import line.
+
+Auto-imported (do NOT add imports for these):
+
+- Vue and Nuxt APIs: `ref`, `computed`, `watch`, `useFetch`, `useRoute`,
+  `navigateTo`, `definePageMeta`, `defineNuxtRouteMiddleware`, `NuxtLink`,
+  `NuxtPage`, ... Never write `import { ref } from 'vue'`.
+- shadcn `ui/*` components (`<Button>`, `<Input>`, `<Combobox>`, ...). The
+  `shadcn-nuxt` module registers only what each folder's `index.ts` exports,
+  so a new ui component must be exported from `app/components/ui/<name>/index.ts`.
+
+Import explicitly:
+
+- Composables: `import { useAuthSession } from '~/composables/useAuthSession'`
+  (one file per composable, named after it).
+- Custom components (everything in `app/components/` outside `ui/`): import
+  the `.vue` file, e.g.
+  `import AdminPageHeader from '~/components/admin/AdminPageHeader.vue'`.
+  A missing import does not fail the build; Vue only warns
+  "Failed to resolve component" at runtime.
+- App helpers: `~/lib/<file>` (e.g. `~/lib/auth-client`, `@/lib/utils` in ui).
+- Shared code: `#shared/utils/<file>`.
+
+Server (`server/`): Nitro still auto-imports `server/utils`, but new or edited
+code imports explicitly from `~~/server/utils/<file>` (e.g.
+`import { requireAdmin } from '~~/server/utils/guard'`). h3 helpers
+(`defineEventHandler`, `getQuery`, `createError`, ...) stay auto-imported.
+
+Unit tests (`tests/*.test.mjs`) run outside Nuxt: mock project modules with
+`vi.mock('../app/composables/<file>', ...)`, and only `vi.stubGlobal` for
+Nuxt/Vue auto-imports.
+
 ## UI components (consistency)
 
 These rules keep forms and controls consistent across the app. Follow them in

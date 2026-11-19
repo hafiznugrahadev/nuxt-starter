@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AdminHeader from '~/components/admin/AdminHeader.vue'
+import AdminSidebar from '~/components/admin/AdminSidebar.vue'
+
 // Admin shell copied from the template's FullLayout: collapsible sidebar on
 // the left, sticky header on top, page content in a centered container.
 </script>
