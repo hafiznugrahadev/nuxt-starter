@@ -1,4 +1,5 @@
 import { hasRole } from '#shared/utils/roles'
+import { useAuthSession } from '~/composables/useAuthSession'
 
 // Route middleware: require a signed-in user holding the super-admin role
 // (a superset of admin that gates developer tooling like the task manager).

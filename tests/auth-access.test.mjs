@@ -4,8 +4,9 @@ import { admin } from 'better-auth/plugins'
 import { adminClient } from 'better-auth/client/plugins'
 import { adminOptions, authRoles } from '../shared/utils/auth-permissions.ts'
 
-const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }))
+const { getSession, useAuthSession } = vi.hoisted(() => ({ getSession: vi.fn(), useAuthSession: vi.fn() }))
 vi.mock('../server/utils/auth', () => ({ auth: { api: { getSession } } }))
+vi.mock('../app/composables/useAuthSession', () => ({ useAuthSession }))
 const roles = [
   ['super-admin', true, true], ['admin', true, false],
   ['admin,super-admin', true, true], ['user,super-admin', true, true],
@@ -24,7 +25,7 @@ describe('API and page access', () => {
   it.each(roles)('%s: admin=%s, super-admin=%s', async (role, isAdmin, isSuperAdmin) => {
     const session = { user: { id: 'actor', role }, session: {} }
     getSession.mockResolvedValue(session)
-    vi.stubGlobal('useAuthSession', async () => ({ data: { value: session } }))
+    useAuthSession.mockResolvedValue({ data: { value: session } })
     const { requireAdmin, requireSuperAdmin } = await import('../server/utils/guard.ts')
     for (const [guard, allowed] of [[requireAdmin, isAdmin], [requireSuperAdmin, isSuperAdmin]]) {
       const result = guard({ headers: new Headers() })
@@ -42,7 +43,7 @@ describe('API and page access', () => {
 
   it('rejects anonymous API access and preserves the page login redirect', async () => {
     getSession.mockResolvedValue(null)
-    vi.stubGlobal('useAuthSession', async () => ({ data: { value: null } }))
+    useAuthSession.mockResolvedValue({ data: { value: null } })
     const { requireAdmin, requireSuperAdmin } = await import('../server/utils/guard.ts')
     for (const guard of [requireAdmin, requireSuperAdmin]) {
       await expect(guard({ headers: new Headers() })).rejects.toMatchObject({ statusCode: 401 })

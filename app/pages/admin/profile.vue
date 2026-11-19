@@ -4,6 +4,8 @@ import { toast } from 'vue-sonner'
 import { z } from 'zod'
 import { parseRoles } from '#shared/utils/roles'
 import { authClient } from '~/lib/auth-client'
+import { useAuthSession } from '~/composables/useAuthSession'
+import AdminPageHeader from '~/components/admin/AdminPageHeader.vue'
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Profile · Admin' })

@@ -7,6 +7,7 @@ import {
 } from '@lucide/vue'
 import type { AuthUser } from '~/lib/auth-client'
 import { parseRoles } from '#shared/utils/roles'
+import AdminPageHeader from '~/components/admin/AdminPageHeader.vue'
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Dashboard · Admin' })

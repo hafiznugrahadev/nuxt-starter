@@ -1,3 +1,5 @@
+import { useAuthSession } from '~/composables/useAuthSession'
+
 // Route middleware: require a signed-in user.
 export default defineNuxtRouteMiddleware(async (to) => {
   const { data: session } = await useAuthSession()

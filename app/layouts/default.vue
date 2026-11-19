@@ -3,6 +3,9 @@ import { ExternalLinkIcon, LogOutIcon, ShieldCheckIcon } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { hasRole } from '#shared/utils/roles'
 import { authClient } from '~/lib/auth-client'
+import { useAuthSession } from '~/composables/useAuthSession'
+import AppLogo from '~/components/AppLogo.vue'
+import ColorModeButton from '~/components/ColorModeButton.vue'
 
 // Public site chrome (header + footer), moved out of app.vue so admin pages
 // can use the dedicated sidebar layout.

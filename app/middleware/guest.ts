@@ -1,4 +1,5 @@
 import { hasRole } from '#shared/utils/roles'
+import { useAuthSession } from '~/composables/useAuthSession'
 
 // Route middleware: keep signed-in users away from auth pages.
 export default defineNuxtRouteMiddleware(async () => {

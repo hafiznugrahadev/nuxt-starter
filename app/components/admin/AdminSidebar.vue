@@ -2,6 +2,8 @@
 import { BookOpenIcon, HomeIcon, LayoutDashboardIcon, ListTodoIcon, SettingsIcon, UserRoundIcon, UsersIcon } from '@lucide/vue'
 import type { Component } from 'vue'
 import { hasRole } from '#shared/utils/roles'
+import { useAuthSession } from '~/composables/useAuthSession'
+import AppLogo from '~/components/AppLogo.vue'
 
 // Sidebar structure mirrors the TailwindAdmin template's VerticalSidebar:
 // labelled groups, active item highlighted with primary, hover with

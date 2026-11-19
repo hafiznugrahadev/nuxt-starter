@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import { authClient } from '~/lib/auth-client'
+import AuthSplitCard from '~/components/AuthSplitCard.vue'
 
 useHead({ title: 'Reset password' })
 
